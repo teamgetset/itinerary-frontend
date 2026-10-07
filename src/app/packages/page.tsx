@@ -34,6 +34,11 @@ export default async function PackagesPage() {
         {packages.length} trips from our {branches.length === 1 ? "branch" : `${branches.length} branches`}, each with a day-by-day
         itinerary to download.
       </p>
+      {packages.length === 0 && (
+        <p className="leaf-md mt-12 bg-paper p-8 text-muted ring-1 ring-line">
+          New trips are on the way. Contact one of our branches below for current options.
+        </p>
+      )}
 
       {branches.map((branch) => {
         const branchPackages = packages.filter((pkg) => pkg.branchSlug === branch.slug);

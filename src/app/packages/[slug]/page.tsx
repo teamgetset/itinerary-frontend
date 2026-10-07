@@ -13,7 +13,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/packages/[slug]">): Promise<Metadata> {
   const pkg = await getPackage((await params).slug);
-  if (!pkg) return {};
+  if (!pkg) notFound();
   return pageMetadata({
     title: pkg.title,
     description: `${pkg.tagline} ${formatDuration(pkg.duration)}, with a downloadable day-by-day itinerary.`,

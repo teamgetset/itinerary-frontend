@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { button } from "@/components/ui/button";
 import { RouteLine } from "@/components/packages/route-line";
+
+export const metadata: Metadata = { title: "Page not found" };
 
 export default function NotFound() {
   return (

@@ -17,7 +17,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/branches/[slug]">): Promise<Metadata> {
   const branch = await getBranch((await params).slug);
-  if (!branch) return {};
+  if (!branch) notFound();
   return pageMetadata({
     title: `${branch.name} branch packages`,
     description: branch.description,

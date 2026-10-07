@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { pageMetadata } from "@/lib/metadata";
 import { getDestination, getDestinations } from "@/services/destinations";
 import { DestinationHub } from "@/components/destinations/destination-hub";
@@ -11,7 +12,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/destinations/[slug]">): Promise<Metadata> {
   const destination = await getDestination((await params).slug);
-  if (!destination) return {};
+  if (!destination) notFound();
   return pageMetadata({
     title: `${destination.name} holiday packages`,
     description: `${destination.summary} Day-by-day itineraries, hotels and prices for every GETSET trip to ${destination.name}.`,

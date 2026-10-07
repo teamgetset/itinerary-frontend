@@ -153,9 +153,13 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
 
   return (
     <>
+      {/* Focusable so keyboard users can scroll the photos with the arrow keys too. */}
       <div
         ref={track}
-        className="absolute inset-0 z-0 flex cursor-grab snap-x snap-mandatory overflow-x-auto overscroll-x-contain select-none [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+        role="region"
+        aria-label="Destination photos"
+        tabIndex={0}
+        className="absolute inset-0 z-0 flex cursor-grab snap-x snap-mandatory overflow-x-auto overscroll-x-contain select-none [scrollbar-width:none] focus-visible:outline-offset-[-4px] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
       >
         {frames.map((slide, i) => {
           const isCopy = i === count;
@@ -222,7 +226,7 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
             </button>
             <ol className="flex items-center">
               {slides.map((slide, i) => (
-                <li key={slide.href}>
+                <li key={i}>
                   <button
                     type="button"
                     onClick={() => goTo(i)}

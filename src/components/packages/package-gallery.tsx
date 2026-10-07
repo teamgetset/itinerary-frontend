@@ -23,7 +23,12 @@ export function PackageGallery({ pkg }: { pkg: TourPackage }) {
       </ViewTransition>
 
       {pkg.gallery.length > 0 && (
-        <ul className="-mx-5 mt-3 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:mt-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0">
+        // Scrolls sideways on phones, so keyboard users need to be able to focus it.
+        <ul
+          aria-label="More photos"
+          tabIndex={0}
+          className="-mx-5 mt-3 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:mt-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 focus-visible:outline-offset-[-4px]"
+        >
           {pkg.gallery.map((photo) => (
             <li key={photo.src} className="leaf-md relative aspect-[4/3] w-[78%] shrink-0 snap-start overflow-hidden bg-frost sm:w-auto">
               <Image

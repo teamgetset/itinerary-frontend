@@ -1,6 +1,6 @@
 import { cache } from "react";
 import type { PackageSummary, Paged, TourPackage } from "@/types";
-import { fetchApi } from "@/lib/api";
+import { fetchApi, orEmpty } from "@/lib/api";
 import { toPackage, toSummary, type DetailDto, type SummaryDto } from "@/lib/mappers";
 
 /*
@@ -41,8 +41,8 @@ export const getPackage = cache(async (slug: string): Promise<TourPackage | null
 
 /** Trips to suggest after this one: other destinations, same branch first (decided by the API). */
 export const getRecommendations = cache(async (slug: string, limit = 4): Promise<PackageSummary[]> => {
-  const result = await fetchApi<SummaryDto[]>(`/packages/${encodeURIComponent(slug)}/recommendations?limit=${limit}`, { tags: ["catalog"] });
-  return (result?.data ?? []).map(toSummary);
+  const read = fetchApi<SummaryDto[]>(`/packages/${encodeURIComponent(slug)}/recommendations?limit=${limit}`, { tags: ["catalog"] });
+  return (await orEmpty(read.then((result) => result?.data ?? []), "recommendations")).map(toSummary);
 });
 
 /** Full packages to one destination, for destination pages. */

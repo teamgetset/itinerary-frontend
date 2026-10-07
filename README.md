@@ -14,6 +14,8 @@ npm run typecheck
 npm test           # node:test checks for trip totals, currency formatting, API mapping, wishlist storage
 ```
 
+Deploying to Vercel: see [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md).
+
 ## Structure
 
 ```text
