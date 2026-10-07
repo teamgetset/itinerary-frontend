@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+/*
+ * GETSET design tokens.
+ * Palette is locked to the brand: the default Tailwind colours are removed on purpose.
+ * Shape rule ("leaf"): containers round the top-right and bottom-left corners only,
+ * echoing the TEAM tab in the logo. Icon buttons are the one exception: full circles.
+ */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-navy: #00386c;
+  --color-night: #002142;
+  --color-cobalt: #005894;
+  --color-sun: #fccc50;
+  --color-sun-deep: #f5bb2a;
+  --color-mist: #f3f6f9;
+  --color-frost: #e6edf4;
+  --color-paper: #fdfefe;
+  --color-ink: #0e2238;
+  --color-muted: #4f6276;
+  --color-line: #d6e0ea;
+  --color-edge: #8193a5; /* form field outlines: 3:1 on paper */
+  --color-danger: #b42318;
+
+  --font-sans: var(--font-mona), ui-sans-serif, system-ui, sans-serif;
+
+  --leaf-xs: 0.5rem;
+  --leaf-sm: 0.875rem;
+  --leaf-md: 1.5rem;
+  --leaf-lg: 2.5rem;
+
+  --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-rise: rise 0.8s var(--ease-glide) both;
+  --animate-settle: settle 1.8s var(--ease-glide) both;
+  --animate-pop: pop 0.45s var(--ease-glide);
+  /* Hero slideshow: each slide holds for the progress duration, then cross-fades over 1.6s. */
+  --animate-hero-zoom: hero-zoom 8.6s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  --animate-hero-progress: hero-progress 7s linear both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(1.25rem);
+    }
+  }
+  @keyframes settle {
+    from {
+      transform: scale(1.12);
+    }
+  }
+  @keyframes pop {
+    40% {
+      transform: scale(1.25);
+    }
+  }
+  @keyframes hero-zoom {
+    from {
+      transform: scale(1.09);
+    }
+  }
+  @keyframes hero-progress {
+    from {
+      transform: scaleX(0);
+    }
+  }
+}
+
+@utility leaf-* {
+  border-radius: 0 --value(--leaf-*) 0 --value(--leaf-*);
+}
+
+/* Page gutter + max width, shared by every section. */
+@utility shell {
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= 48rem) {
+    padding-inline: 2rem;
+  }
+  @media (width >= 80rem) {
+    padding-inline: 3rem;
+  }
+}
+
+/* Drops alternate columns of a card grid by 3rem, matched to the column count at each breakpoint. */
+@utility stagger-grid {
+  @media (width >= 40rem) and (width < 64rem) {
+    padding-bottom: 3rem;
+    & > :nth-child(2n) {
+      translate: 0 3rem;
+    }
+  }
+  @media (width >= 64rem) and (width < 80rem) {
+    padding-bottom: 3rem;
+    & > :nth-child(3n + 2) {
+      translate: 0 3rem;
+    }
+  }
+  @media (width >= 80rem) {
+    padding-bottom: 3rem;
+    & > :nth-child(4n + 2),
+    & > :nth-child(4n + 4) {
+      translate: 0 3rem;
+    }
+  }
+}
+
+/* Expanded display cut of Mona Sans, the closest match to the wide GETSET wordmark. */
+@utility type-display {
+  font-stretch: 116%;
+  font-weight: 680;
+  letter-spacing: -0.032em;
+  line-height: 1.02;
+}
+
+/* Airport codes and route data: fully expanded, heavy, uppercase. */
+@utility type-code {
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Small data labels inside components (never used as section eyebrows). */
+@utility type-label {
+  font-size: 0.6875rem;
+  font-stretch: 112%;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-padding-top: 6rem;
+    scrollbar-gutter: stable;
+    -webkit-text-size-adjust: 100%;
+  }
+  /* Modal dialogs (search, mobile menu) freeze the page behind them. */
+  html:has(dialog:modal) {
+    overflow: hidden;
+  }
+  body {
+    background: var(--color-mist);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: var(--color-sun);
+    color: var(--color-night);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-cobalt);
+    outline-offset: 3px;
+  }
+  .on-dark :focus-visible {
+    outline-color: var(--color-sun);
+  }
+  summary {
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+/* ---------- Motion. Everything below is skipped for prefers-reduced-motion. ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Scroll reveal: native scroll-driven animation, no JS. Browsers without support just show content. */
+  @supports (animation-timeline: view()) {
+    [data-reveal] {
+      animation: reveal both var(--ease-glide);
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+  }
+
+  /* Header gains a hairline and shadow once the page scrolls. */
+  @supports (animation-timeline: scroll()) {
+    [data-elevate] {
+      animation: elevate linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 6rem;
+    }
+  }
+
+  /* Dialog entry for search and the mobile menu. */
+  dialog[open] {
+    transition:
+      opacity 0.35s var(--ease-glide),
+      translate 0.45s var(--ease-glide);
+    @starting-style {
+      opacity: 0;
+      translate: 0 0.75rem;
+    }
+  }
+  dialog::backdrop {
+    transition: opacity 0.35s ease;
+  }
+  dialog[open]::backdrop {
+    @starting-style {
+      opacity: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(2.5rem);
+  }
+}
+
+@keyframes elevate {
+  to {
+    border-color: var(--color-line);
+    box-shadow: 0 10px 30px -18px rgb(0 33 66 / 0.35);
+  }
+}
+
+/* Route changes: old page leaves fast, new page arrives gently (React <ViewTransition> in app/template.tsx). */
+::view-transition-old(.page-exit) {
+  animation: 160ms ease-in both page-fade reverse;
+}
+::view-transition-new(.page-enter) {
+  animation:
+    300ms ease-out 120ms both page-fade,
+    450ms var(--ease-glide) both page-rise;
+}
+
+/* Shared-element morph from a package card image into the package page hero. */
+::view-transition-group(.package-photo) {
+  animation-duration: 0.55s;
+  animation-timing-function: var(--ease-glide);
+}
+::view-transition-image-pair(.package-photo) {
+  animation-name: morph-blur;
+}
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes page-rise {
+  from {
+    translate: 0 0.75rem;
+  }
+}
+@keyframes morph-blur {
+  30% {
+    filter: blur(3px);
+  }
+}
