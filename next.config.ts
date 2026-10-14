@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
-// Photos are served by the GETSET API (its /media path) and optimised here like local images.
+// Photos come from GETSET's Cloudinary account (or, when the API stores files locally, its /media path) and are
+// optimised here like local images.
 const apiUrl = new URL(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000");
 
 // Settings that would break the live site fail the build instead: request paths are built from the bare origin,
@@ -21,6 +22,8 @@ const nextConfig: NextConfig = {
     // AVIF first (smaller photos), WebP fallback. Encoded once, then cached.
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
+      // Only this account's image delivery URLs, without query strings: no other Cloudinary account, no PDFs.
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "/bommfge0/image/upload/**", search: "" },
       {
         protocol: apiUrl.protocol.replace(":", "") as "http" | "https",
         hostname: apiUrl.hostname,

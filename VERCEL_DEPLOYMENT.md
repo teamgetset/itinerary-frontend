@@ -47,11 +47,14 @@ The website holds no database URL, auth secret, JWT secret or admin credentials.
 
 - server-side page data: `<NEXT_PUBLIC_API_URL>/api/public/...` (or `GETSET_API_URL` if set),
 - browser calls (package paging, search, wishlist, enquiries): `<NEXT_PUBLIC_API_URL>/api/public/...`,
-- photos: `<NEXT_PUBLIC_API_URL>/media/...`, resized by Vercel's image optimiser (only this host and path are allowed),
+- photos: on GETSET's Cloudinary account (`https://res.cloudinary.com/<cloud>/image/upload/...`, the URLs the API
+  returns), resized by Vercel's image optimiser; only that account's image path, and the API's own `/media/...` path
+  (used when the API stores files locally), are allowed,
 - itinerary PDFs: `<NEXT_PUBLIC_API_URL>/api/public/packages/<slug>/pdf?branding=with-logo|without-logo`, downloaded
   straight from the API (it sends `Content-Disposition: attachment`).
 
-If photos later move to a CDN host, add that host to `images.remotePatterns` in `next.config.ts`.
+The Cloudinary account is set in `images.remotePatterns` in `next.config.ts`; change it there if the photos ever move
+to another account or host.
 
 ## CORS and the API's settings
 
