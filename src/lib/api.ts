@@ -31,7 +31,10 @@ export async function fetchApi<T>(path: string, options: { tags: CacheTag[]; fre
     signal: AbortSignal.timeout(TIMEOUT_MS),
     ...(options.fresh ? { cache: "no-store" as const } : { cache: "force-cache" as const, next: { tags: options.tags, revalidate: 3600 } }),
   }).catch((error: unknown) => {
-    throw new ApiUnavailableError(`GETSET API unreachable at ${SERVER_API_URL}: ${(error as Error).message}`);
+    // fetch says only "fetch failed"; the reason (DNS, refused connection, TLS) is in its cause.
+    const cause = (error as Error).cause as { message?: string; code?: string } | undefined;
+    const reason = cause?.message ?? cause?.code;
+    throw new ApiUnavailableError(`GETSET API unreachable at ${SERVER_API_URL}: ${(error as Error).message}${reason ? ` (${reason})` : ""}`);
   });
   if (response.status === 404) return null;
   if (!response.ok) throw new ApiUnavailableError(`GETSET API ${response.status} for ${path}`);
