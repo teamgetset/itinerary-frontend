@@ -101,7 +101,7 @@ export interface DetailDto extends SummaryDto {
   destination: DestinationDto;
   branch: BranchDto;
   reviews: { customerName: string; rating: number; review: string; source: { date: string | null } | null }[];
-  pdf: { withLogoUrl: string; withoutLogoUrl: string };
+  pdf: { url: string; sizeBytes: number; updatedAt: string } | null;
   seo: SeoDto;
 }
 

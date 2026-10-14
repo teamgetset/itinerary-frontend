@@ -163,8 +163,8 @@ export interface TourPackage {
   importantInfo: string[];
   terms: string[];
   reviews: Review[];
-  /** The itinerary PDF in two prints, served by the API (always matching this content). */
-  pdf: { withLogoUrl: string; withoutLogoUrl: string };
+  /** The uploaded itinerary PDF, downloaded through the API; null when the package has none yet. */
+  pdf: { url: string; sizeBytes: number; updatedAt: string } | null;
   seo: Seo;
 }
 

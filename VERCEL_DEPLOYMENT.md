@@ -1,7 +1,7 @@
 # Deploying the website to Vercel
 
 The customer website (this repository) runs on Vercel. The GETSET API and its database run on a separate server,
-because the API needs Chrome to print PDFs, a permanent disk for uploads, and a process that stays running.
+because the API needs a process that stays running and private file storage (Cloudinary) behind it.
 
 ```text
 Visitors ──▶ Website (Vercel) ──▶ GETSET API (separate server, public HTTPS) ──▶ PostgreSQL
@@ -50,8 +50,9 @@ The website holds no database URL, auth secret, JWT secret or admin credentials.
 - photos: on GETSET's Cloudinary account (`https://res.cloudinary.com/<cloud>/image/upload/...`, the URLs the API
   returns), resized by Vercel's image optimiser; only that account's image path, and the API's own `/media/...` path
   (used when the API stores files locally), are allowed,
-- itinerary PDFs: `<NEXT_PUBLIC_API_URL>/api/public/packages/<slug>/pdf?branding=with-logo|without-logo`, downloaded
-  straight from the API (it sends `Content-Disposition: attachment`).
+- itinerary PDFs (uploaded in the admin): `<NEXT_PUBLIC_API_URL>/api/public/packages/<slug>/pdf`, downloaded straight
+  from the API (it sends `Content-Disposition: attachment`); a package without one answers 404 and its page shows
+  "not available yet".
 
 The Cloudinary account is set in `images.remotePatterns` in `next.config.ts`; change it there if the photos ever move
 to another account or host.
@@ -83,7 +84,7 @@ enquiries are refused by the API. Test those on production, or point a staging A
 4. **Settings → Domains**: add `teamgetset.com` (and `www`, redirecting to the primary one); update DNS as Vercel
    shows.
 5. On the API server, set `FRONTEND_URL` to that primary origin and restart the API.
-6. Check the live site: open a package directly by URL, switch INR/AED, download both PDFs, use search and page 2 of
+6. Check the live site: open a package directly by URL, switch INR/AED, download the itinerary PDF, use search and page 2 of
    the home packages, send a test enquiry, then change something in the admin and see it on the site within seconds.
 
 Optional: in **Settings → Functions**, choose a region close to the API server, so page refreshes are quick.

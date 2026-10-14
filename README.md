@@ -43,13 +43,14 @@ src/
 - **Traveller pricing.** Adults, children and infants are priced from the package's price table
   (`lib/pricing.ts`, the same rule as the API's quote endpoint). The WhatsApp enquiry carries the party and the
   estimate in the selected currency; the enquiry form sends both to the API.
-- **PDFs.** Download buttons link to the API, which always serves the version matching the current content.
+- **PDFs.** Each package's itinerary PDF is uploaded in the admin; the download button links to the API, which streams
+  it from private storage. A package without one shows "not available yet" instead of a button.
 - **Missing images** fall back to `public/images/placeholder.jpg` rather than breaking a page.
 
 ## Discovery flow
 
 Home (hero, branch cards, all packages paged six at a time) → branch → package (day-by-day itinerary with timed
-activities, PDF in two prints, traveller pricing, WhatsApp or enquiry form) → suggestions from other destinations.
+activities, itinerary PDF download, traveller pricing, WhatsApp or enquiry form) → suggestions from other destinations.
 Branch, destination and package pages are generated from the API: new ones need no code.
 
 ## Design system
