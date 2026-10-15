@@ -2,8 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseWishlist } from "@/hooks/use-wishlist";
 import { formatCurrency, formatCurrencyCode, fillTemplate, formatPlace, formatClock } from "./format";
-import { staysFromItinerary } from "./itinerary";
-import { PLACEHOLDER, toSummary, type SummaryDto } from "./mappers";
+import { PLACEHOLDER, toHotels, toIncludedActivity, toSummary, toTimelineItem, type SummaryDto } from "./mappers";
 import { describeTravellers, tripTotals } from "./pricing";
 
 const prices = {
@@ -58,14 +57,44 @@ test("wishlist storage drops anything malformed", () => {
   assert.deepEqual(parseWishlist(null), []);
 });
 
-test("stays come from consecutive nights in the itinerary", () => {
-  const stays = staysFromItinerary([
-    { day: 1, title: "", description: "", stay: "Tbilisi", timeline: [] },
-    { day: 2, title: "", description: "", stay: "Tbilisi", timeline: [] },
-    { day: 3, title: "", description: "", stay: "Kazbegi", timeline: [] },
-    { day: 4, title: "", description: "", timeline: [] },
+test("timeline steps carry their type and their linked catalogue activity; the step's own words win", () => {
+  const step = { time: "16:30", title: "Dune drive", description: null, location: null };
+  const image = { id: "m1", url: "https://res.cloudinary.com/demo/image/upload/safari.jpg", alt: "", focalPoint: "center 30%" };
+  const safari = { slug: "desert-safari", name: "Desert Safari", description: "Dune drive, camel ride and a barbecue dinner.", location: "Lahbab desert", image };
+
+  assert.deepEqual(toTimelineItem({ ...step, type: "ACTIVITY", activity: safari }), {
+    ...step,
+    location: "Lahbab desert",
+    type: "ACTIVITY",
+    activity: { name: "Desert Safari", description: "Dune drive, camel ride and a barbecue dinner.", photo: { src: image.url, alt: "Desert Safari", position: "center 30%" } },
+  });
+  assert.equal(toTimelineItem({ ...step, location: "Camp Al Khayma", type: "ACTIVITY", activity: safari }).location, "Camp Al Khayma", "own location first");
+  assert.deepEqual(toTimelineItem({ ...step, type: "ACTIVITY", activity: { ...safari, description: "", location: null, image: null } }).activity, { name: "Desert Safari" });
+  // Unlinked steps are as before; a type this site does not know shows as "Other".
+  assert.deepEqual(toTimelineItem({ ...step, type: "TRANSFER", activity: null }), { ...step, type: "TRANSFER" });
+  assert.deepEqual(toTimelineItem({ ...step, type: "TRANSFER" }), { ...step, type: "TRANSFER" }, "an API without the link field");
+  assert.equal(toTimelineItem({ ...step, type: "HELICOPTER" }).type, "OTHER");
+});
+
+test("Where you stay: only hotels saved and marked Included, with just the details entered; no fallback", () => {
+  const row = { name: "Atlantis The Palm", starCategory: 5, location: "Palm Jumeirah, Dubai", nights: null, roomType: null, mealPlan: null, isDefault: true };
+  assert.deepEqual(toHotels([]), [], "nothing saved: no section");
+  assert.deepEqual(toHotels([{ ...row, isDefault: false }]), [], "an alternative is not a stay");
+  assert.deepEqual(toHotels([{ ...row, name: "  " }]), [], "a hotel without a name is not valid");
+  assert.deepEqual(toHotels([row]), [{ city: "Palm Jumeirah, Dubai", name: "Atlantis The Palm", category: "5-star" }]);
+  assert.deepEqual(toHotels([{ ...row, starCategory: null, nights: 3, roomType: "Ocean suite", mealPlan: "Half board" }]), [
+    { city: "Palm Jumeirah, Dubai", nights: 3, name: "Atlantis The Palm", roomType: "Ocean suite", mealPlan: "Half board" },
   ]);
-  assert.deepEqual(stays, [{ city: "Tbilisi", nights: 2 }, { city: "Kazbegi", nights: 1 }]);
+});
+
+test("included experiences keep only the details entered; the photo's alt text falls back to the name", () => {
+  const image = { id: "m1", url: "https://res.cloudinary.com/demo/image/upload/dhow.jpg", alt: "", focalPoint: null };
+  assert.deepEqual(
+    toIncludedActivity({ slug: "dhow-cruise", name: "Dhow Cruise", description: "Dinner on a dhow.", location: "Dubai Marina", image }),
+    { name: "Dhow Cruise", description: "Dinner on a dhow.", location: "Dubai Marina", photo: { src: image.url, alt: "Dhow Cruise" } },
+  );
+  assert.deepEqual(toIncludedActivity({ slug: "garden", name: "Miracle Garden", description: "", location: null, image: null }), { name: "Miracle Garden" });
+  assert.deepEqual(toIncludedActivity({ slug: "garden", name: "Miracle Garden", description: "", image: null }), { name: "Miracle Garden" }, "an API without location");
 });
 
 test("places read naturally", () => {

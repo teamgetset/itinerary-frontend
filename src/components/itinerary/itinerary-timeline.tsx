@@ -1,7 +1,74 @@
 import Image from "next/image";
-import { Bed, ForkKnife } from "@phosphor-icons/react/dist/ssr";
-import type { ItineraryDay } from "@/types";
+import {
+  AirplaneLanding,
+  AirplaneTakeoff,
+  Bed,
+  Binoculars,
+  Coffee,
+  ForkKnife,
+  Key,
+  SuitcaseRolling,
+  Ticket,
+  Van,
+} from "@phosphor-icons/react/dist/ssr";
+import type { Icon } from "@phosphor-icons/react";
+import type { ActivityType, ItineraryDay, TimelineItem } from "@/types";
 import { formatClock } from "@/lib/format";
+import { ACTIVITY_TYPE_LABELS } from "@/lib/itinerary";
+
+/** One icon per kind of step, in the timeline's ring. "Other" keeps the plain dot. */
+const TYPE_ICONS: Partial<Record<ActivityType, Icon>> = {
+  ARRIVAL: AirplaneLanding,
+  TRANSFER: Van,
+  CHECK_IN: Key,
+  SIGHTSEEING: Binoculars,
+  ACTIVITY: Ticket,
+  MEAL: ForkKnife,
+  FREE_TIME: Coffee,
+  CHECK_OUT: SuitcaseRolling,
+  DEPARTURE: AirplaneTakeoff,
+};
+
+/**
+ * One step of a day. Its type shows as an icon on the dotted line (and is read out to screen readers); a linked
+ * catalogue activity adds its photo, and its description when the step has none (kept to three lines).
+ */
+function TimelineStep({ item }: { item: TimelineItem }) {
+  const TypeIcon = TYPE_ICONS[item.type];
+  const description = item.description ?? item.activity?.description;
+  return (
+    <li className="relative flex items-start justify-between gap-4 text-ink">
+      {TypeIcon ? (
+        <span
+          aria-hidden
+          title={ACTIVITY_TYPE_LABELS[item.type]}
+          className="absolute top-0 -left-[37px] grid size-6 place-items-center rounded-full border-2 border-cobalt bg-paper text-cobalt"
+        >
+          <TypeIcon weight="bold" className="size-3.5" />
+        </span>
+      ) : (
+        <span aria-hidden className="absolute top-2 -left-[30px] size-2.5 rounded-full border-2 border-cobalt bg-paper" />
+      )}
+      <span className="min-w-0">
+        {TypeIcon && <span className="sr-only">{ACTIVITY_TYPE_LABELS[item.type]}: </span>}
+        {item.time && <span className="mr-2 font-semibold whitespace-nowrap text-cobalt">{formatClock(item.time)}</span>}
+        {item.title}
+        {item.location && <span className="text-muted">, {item.location}</span>}
+        {description && <span className={`block text-sm text-muted ${item.description ? "" : "line-clamp-3"}`}>{description}</span>}
+      </span>
+      {item.activity?.photo && (
+        <Image
+          src={item.activity.photo.src}
+          alt={item.activity.photo.alt}
+          width={64}
+          height={64}
+          style={{ objectPosition: item.activity.photo.position }}
+          className="leaf-xs size-14 shrink-0 object-cover sm:size-16"
+        />
+      )}
+    </li>
+  );
+}
 
 /** Day-by-day plan, joined by the same dashed route line used across the site. */
 export function ItineraryTimeline({ days }: { days: ItineraryDay[] }) {
@@ -35,15 +102,9 @@ export function ItineraryTimeline({ days }: { days: ItineraryDay[] }) {
               </div>
             )}
             {day.timeline.length > 0 && (
-              <ol className="mt-4 space-y-2 border-l-2 border-dotted border-line pl-4">
+              <ol className="mt-4 space-y-2 border-l-2 border-dotted border-line pl-6">
                 {day.timeline.map((item, i) => (
-                  <li key={`${item.time}-${i}`} className="relative text-ink">
-                    <span aria-hidden className="absolute top-2 -left-[1.3rem] size-2.5 rounded-full border-2 border-cobalt bg-paper" />
-                    {item.time && <span className="mr-2 font-semibold whitespace-nowrap text-cobalt">{formatClock(item.time)}</span>}
-                    {item.title}
-                    {item.location && <span className="text-muted">, {item.location}</span>}
-                    {item.description && <span className="block text-sm text-muted">{item.description}</span>}
-                  </li>
+                  <TimelineStep key={`${item.time}-${i}`} item={item} />
                 ))}
               </ol>
             )}
@@ -52,7 +113,7 @@ export function ItineraryTimeline({ days }: { days: ItineraryDay[] }) {
                 {(day.hotel || day.stay) && (
                   <span className="flex items-center gap-2">
                     <Bed aria-hidden weight="bold" className="size-4 text-cobalt" />
-                    {day.hotel ? `Overnight at ${day.hotel}` : `Overnight in ${day.stay}`}
+                    {day.hotel ? `Overnight at ${day.hotel.name}` : `Overnight in ${day.stay}`}
                   </span>
                 )}
                 {day.meals && (

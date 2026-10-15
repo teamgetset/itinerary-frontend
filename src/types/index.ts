@@ -78,13 +78,28 @@ export interface Destination {
 
 export type Meal = "Breakfast" | "Lunch" | "Dinner";
 
+/** The kind of itinerary step, chosen in the admin; it sets the step's icon. "OTHER" has none. */
+export type ActivityType = "ARRIVAL" | "TRANSFER" | "CHECK_IN" | "SIGHTSEEING" | "ACTIVITY" | "MEAL" | "FREE_TIME" | "CHECK_OUT" | "DEPARTURE" | "OTHER";
+
 /** A timed entry in a day's plan, e.g. 10:30 Airport pickup. */
 export interface TimelineItem {
   /** "10:30", local time. */
   time: string | null;
   title: string;
   description: string | null;
+  /** The step's own location, else its linked catalogue activity's. */
   location: string | null;
+  type: ActivityType;
+  /** The catalogue activity the step is linked to in the admin (only while it is switched on there). */
+  activity?: { name: string; description?: string; photo?: Photo };
+}
+
+/** A catalogue experience included in a package, e.g. a desert safari. */
+export interface IncludedActivity {
+  name: string;
+  description?: string;
+  location?: string;
+  photo?: Photo;
 }
 
 export interface ItineraryDay {
@@ -93,8 +108,8 @@ export interface ItineraryDay {
   description: string;
   /** Where the night is spent. Omitted on the departure day. */
   stay?: string;
-  /** The hotel for that night, when set. */
-  hotel?: string;
+  /** The hotel for that night, when one is chosen in the admin. */
+  hotel?: { name: string; city?: string; category?: string };
   meals?: Meal[];
   /** The day's photo, when one is set in the admin. */
   photo?: Photo;
@@ -103,11 +118,15 @@ export interface ItineraryDay {
 
 export interface Hotel {
   city: string;
-  nights: number;
+  /** Left out when the admin did not enter it. */
+  nights?: number;
   /** Property name, once confirmed. */
   name?: string;
   /** e.g. "4-star". */
   category?: string;
+  /** e.g. "Deluxe room", "Half board": shown only when entered in the admin. */
+  roomType?: string;
+  mealPlan?: string;
 }
 
 export interface Review {
@@ -167,7 +186,7 @@ export interface TourPackage {
   exclusions: string[];
   /** Free-text keywords that help search, e.g. "honeymoon", "skiing". */
   keywords: string[];
-  /** Confirmed hotels. Without them, the page lists stays derived from the itinerary. */
+  /** Hotels saved in the admin's Hotels tab (chosen and marked "Included"). Without them there is no "Where you stay". */
   hotels?: Hotel[];
   /** Practical tips for this trip, shown under "Good to know" after the destination's travel facts. */
   goodToKnow: { title: string; description?: string }[];
@@ -175,6 +194,8 @@ export interface TourPackage {
   importantInfo: string[];
   terms: string[];
   reviews: Review[];
+  /** Experiences included in the package (its Activities tab in the admin), in the admin's order. */
+  activities: IncludedActivity[];
   /** The uploaded itinerary PDF with the GETSET logo; null when the package has none yet. */
   pdf: ItineraryPdf | null;
   /** The same itinerary without the logo; null when it has not been uploaded. */

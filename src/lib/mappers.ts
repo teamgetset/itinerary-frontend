@@ -1,6 +1,9 @@
 import type {
+  ActivityType,
   Branch,
   Destination,
+  Hotel,
+  IncludedActivity,
   ItineraryPdf,
   Meal,
   PackageSummary,
@@ -9,13 +12,26 @@ import type {
   Prices,
   Seo,
   Testimonial,
+  TimelineItem,
   TourPackage,
 } from "@/types";
+import { ACTIVITY_TYPE_LABELS } from "./itinerary";
 
 /*
  * API responses -> UI types. Pure functions, used by server services and browser code alike.
  * The API shapes below are the parts of the public API this site reads (see docs/API.md).
  */
+
+/** One step of an itinerary day, as the API sends it. */
+export interface TimelineDto {
+  time: string | null;
+  title: string;
+  description: string | null;
+  location: string | null;
+  type: string;
+  /** The linked catalogue activity; missing from an API older than this field. */
+  activity?: { slug: string; name: string; description: string; location: string | null; image: ImageDto | null } | null;
+}
 
 export interface ImageDto {
   id: string;
@@ -90,13 +106,15 @@ export interface DetailDto extends SummaryDto {
     description: string;
     stay: string | null;
     meals: ("BREAKFAST" | "LUNCH" | "DINNER")[];
-    hotel: { name: string } | null;
+    hotel: { name: string; starCategory: number | null; location: string } | null;
     image: ImageDto | null;
-    activities: { time: string | null; title: string; description: string | null; location: string | null }[];
+    activities: TimelineDto[];
   }[];
   inclusions: { title: string }[];
   exclusions: { title: string }[];
-  hotels: { name: string; starCategory: number | null; location: string; nights: number; isDefault: boolean }[];
+  hotels: { name: string; starCategory: number | null; location: string; nights: number | null; roomType: string | null; mealPlan: string | null; isDefault: boolean }[];
+  /** The package's included experiences; location is missing from an API older than it. */
+  activities?: { slug: string; name: string; description: string; location?: string | null; image: ImageDto | null }[];
   prices: PriceTable;
   /** Missing from an API older than "Good to know". */
   goodToKnow?: { title: string; description: string | null }[];
@@ -130,7 +148,59 @@ export const photo = (image: ImageDto | null | undefined, fallback: Photo = PLAC
 
 const seo = (dto: SeoDto): Seo => ({ ...dto, ogImage: dto.ogImage ? photo(dto.ogImage) : null });
 
+/** A hotel's star rating as shown on the page, e.g. "4-star". */
+const stars = (starCategory: number | null) => (starCategory ? { category: `${starCategory}-star` } : {});
+
 const MEALS: Record<string, Meal> = { BREAKFAST: "Breakfast", LUNCH: "Lunch", DINNER: "Dinner" };
+
+/**
+ * An itinerary step for the timeline. The step's own words always win; a linked catalogue activity adds its photo, and
+ * its location and description where the step has none. A type this site does not know shows as "Other" (no icon).
+ */
+export function toTimelineItem(entry: TimelineDto): TimelineItem {
+  const linked = entry.activity;
+  return {
+    time: entry.time,
+    title: entry.title,
+    description: entry.description,
+    location: entry.location || linked?.location || null,
+    type: entry.type in ACTIVITY_TYPE_LABELS ? (entry.type as ActivityType) : "OTHER",
+    ...(linked && {
+      activity: {
+        name: linked.name,
+        ...(linked.description && { description: linked.description }),
+        ...(linked.image && { photo: { ...photo(linked.image), alt: linked.image.alt || linked.name } }),
+      },
+    }),
+  };
+}
+
+/**
+ * The hotels for "Where you stay": only those saved in the package's Hotels tab with a hotel chosen and marked
+ * "Included", with just the details entered. No fallback: without one, the page has no such section.
+ */
+export function toHotels(rows: DetailDto["hotels"]): Hotel[] {
+  return rows
+    .filter((hotel) => hotel.isDefault && hotel.name?.trim())
+    .map((hotel) => ({
+      city: hotel.location,
+      ...(hotel.nights && { nights: hotel.nights }),
+      name: hotel.name,
+      ...stars(hotel.starCategory),
+      ...(hotel.roomType && { roomType: hotel.roomType }),
+      ...(hotel.mealPlan && { mealPlan: hotel.mealPlan }),
+    }));
+}
+
+/** An included experience with only the details entered in the catalogue; its photo's alt text falls back to its name. */
+export function toIncludedActivity(activity: NonNullable<DetailDto["activities"]>[number]): IncludedActivity {
+  return {
+    name: activity.name,
+    ...(activity.description && { description: activity.description }),
+    ...(activity.location && { location: activity.location }),
+    ...(activity.image && { photo: { ...photo(activity.image), alt: activity.image.alt || activity.name } }),
+  };
+}
 
 export function toSummary(dto: SummaryDto): PackageSummary {
   return {
@@ -187,7 +257,7 @@ export function toDestination(dto: DestinationDto): Destination {
 
 export function toPackage(dto: DetailDto): TourPackage {
   const summary = toSummary(dto);
-  const hotels = dto.hotels.filter((hotel) => hotel.isDefault);
+  const hotels = toHotels(dto.hotels);
   return {
     ...summary,
     branch: toBranch(dto.branch),
@@ -202,21 +272,17 @@ export function toPackage(dto: DetailDto): TourPackage {
       title: day.title,
       description: day.description,
       ...(day.stay && { stay: day.stay }),
-      ...(day.hotel && { hotel: day.hotel.name }),
+      ...(day.hotel && {
+        hotel: { name: day.hotel.name, ...(day.hotel.location && { city: day.hotel.location }), ...stars(day.hotel.starCategory) },
+      }),
       ...(day.meals.length && { meals: day.meals.map((meal) => MEALS[meal]!) }),
       ...(day.image && { photo: photo(day.image) }),
-      timeline: day.activities,
+      timeline: day.activities.map(toTimelineItem),
     })),
     inclusions: dto.inclusions.map((item) => item.title),
     exclusions: dto.exclusions.map((item) => item.title),
-    ...(hotels.length && {
-      hotels: hotels.map((hotel) => ({
-        city: hotel.location,
-        nights: hotel.nights,
-        name: hotel.name,
-        ...(hotel.starCategory && { category: `${hotel.starCategory}-star` }),
-      })),
-    }),
+    ...(hotels.length && { hotels }),
+    activities: (dto.activities ?? []).map(toIncludedActivity),
     goodToKnow: (dto.goodToKnow ?? []).map(({ title, description }) => ({ title, ...(description && { description }) })),
     importantInfo: dto.importantInfo,
     terms: dto.terms,

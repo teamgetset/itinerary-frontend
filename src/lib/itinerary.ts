@@ -1,13 +1,15 @@
-import type { Hotel, ItineraryDay } from "@/types";
+import type { ActivityType } from "@/types";
 
-/** Consecutive nights in the same place, in order: the stays implied by a day-by-day plan. */
-export function staysFromItinerary(days: ItineraryDay[]): Hotel[] {
-  const stays: Hotel[] = [];
-  for (const day of days) {
-    if (!day.stay) continue;
-    const last = stays.at(-1);
-    if (last?.city === day.stay) last.nights += 1;
-    else stays.push({ city: day.stay, nights: 1 });
-  }
-  return stays;
-}
+/** How each kind of step is named, for screen readers and the icon's tooltip. */
+export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
+  ARRIVAL: "Arrival",
+  TRANSFER: "Transfer",
+  CHECK_IN: "Check-in",
+  SIGHTSEEING: "Sightseeing",
+  ACTIVITY: "Activity",
+  MEAL: "Meal",
+  FREE_TIME: "Free time",
+  CHECK_OUT: "Check-out",
+  DEPARTURE: "Departure",
+  OTHER: "Other",
+};

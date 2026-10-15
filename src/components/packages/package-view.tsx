@@ -11,7 +11,7 @@ import { PackageGallery } from "./package-gallery";
 import { TravellersProvider, TripTotal } from "./traveller-pricing";
 import { DownloadItineraryButton } from "@/components/itinerary/download-itinerary-button";
 import { ItineraryTimeline } from "@/components/itinerary/itinerary-timeline";
-import { ReviewsSection, StaysSection, headingClass, sectionClass } from "./package-sections";
+import { ActivitiesSection, ReviewsSection, StaysSection, headingClass, sectionClass } from "./package-sections";
 
 /**
  * The whole package page. Shared by the live page (/packages/[slug]) and the admin's draft preview
@@ -109,6 +109,8 @@ export function PackageView({
 
               <StaysSection pkg={pkg} />
 
+              <ActivitiesSection pkg={pkg} />
+
               <section aria-labelledby="included" className={sectionClass}>
                 <h2 id="included" className={headingClass}>
                   What&apos;s included
@@ -144,7 +146,9 @@ export function PackageView({
                   <h2 id="good-to-know" className={headingClass}>
                     Good to know
                   </h2>
-                  {/* The destination's travel facts, then this trip's own tips, in the same style. */}
+                  {/* goodToKnow is the package's list as managed in the admin (it already holds the destination's travel
+                      facts until the package saves its own). destination.facts is sent empty by current APIs; it is only
+                      filled by older ones, which sent the facts separately. */}
                   <dl className="mt-8 grid gap-x-8 gap-y-7 sm:grid-cols-2">
                     {pkg.destination.facts.map((fact) => (
                       <div key={fact.label} className="border-l-2 border-sun pl-5">
