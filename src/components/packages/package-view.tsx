@@ -139,42 +139,65 @@ export function PackageView({
                 </div>
               </section>
 
-              <section aria-labelledby="good-to-know" className={sectionClass}>
-                <h2 id="good-to-know" className={headingClass}>
-                  Good to know
-                </h2>
-                <dl className="mt-8 grid gap-x-8 gap-y-7 sm:grid-cols-2">
-                  {pkg.destination.facts.map((fact) => (
-                    <div key={fact.label} className="border-l-2 border-sun pl-5">
-                      <dt className="type-label text-muted">{fact.label}</dt>
-                      <dd className="mt-2 leading-relaxed text-ink">{fact.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-                {pkg.importantInfo && pkg.importantInfo.length > 0 && (
-                  <>
-                    <h3 className="mt-12 font-semibold text-navy">Important information</h3>
-                    <ul className="mt-4 space-y-3 text-ink">
-                      {pkg.importantInfo.map((item) => (
-                        <li key={item} className="flex gap-3">
+              {(pkg.destination.facts.length > 0 || pkg.goodToKnow.length > 0) && (
+                <section aria-labelledby="good-to-know" className={sectionClass}>
+                  <h2 id="good-to-know" className={headingClass}>
+                    Good to know
+                  </h2>
+                  {/* The destination's travel facts, then this trip's own tips, in the same style. */}
+                  <dl className="mt-8 grid gap-x-8 gap-y-7 sm:grid-cols-2">
+                    {pkg.destination.facts.map((fact) => (
+                      <div key={fact.label} className="border-l-2 border-sun pl-5">
+                        <dt className="type-label text-muted">{fact.label}</dt>
+                        <dd className="mt-2 leading-relaxed text-ink">{fact.value}</dd>
+                      </div>
+                    ))}
+                    {pkg.goodToKnow.map((tip, index) => (
+                      <div key={`tip-${index}`} className="border-l-2 border-sun pl-5">
+                        {tip.description ? (
+                          <>
+                            <dt className="type-label text-muted">{tip.title}</dt>
+                            <dd className="mt-2 leading-relaxed text-ink">{tip.description}</dd>
+                          </>
+                        ) : (
+                          <>
+                            <dt className="sr-only">Tip</dt>
+                            <dd className="leading-relaxed text-ink">{tip.title}</dd>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              )}
+
+              {(pkg.importantInfo.length > 0 || pkg.terms.length > 0) && (
+                <section aria-labelledby="important-information" className={sectionClass}>
+                  <h2 id="important-information" className={headingClass}>
+                    Important information
+                  </h2>
+                  {pkg.importantInfo.length > 0 && (
+                    <ul className="mt-8 space-y-3 text-ink">
+                      {pkg.importantInfo.map((item, index) => (
+                        <li key={`${index}-${item}`} className="flex gap-3">
                           <span aria-hidden className="leaf-xs mt-2 size-2 shrink-0 bg-sun" />
                           {item}
                         </li>
                       ))}
                     </ul>
-                  </>
-                )}
-                {pkg.terms && pkg.terms.length > 0 && (
-                  <details className="group leaf-md mt-10 bg-paper ring-1 ring-line">
-                    <summary className="cursor-pointer px-6 py-4 font-semibold text-navy">Terms and conditions</summary>
-                    <ul className="space-y-2 px-6 pb-6 text-sm leading-relaxed text-muted">
-                      {pkg.terms.map((term) => (
-                        <li key={term}>{term}</li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
-              </section>
+                  )}
+                  {pkg.terms.length > 0 && (
+                    <details className="group leaf-md mt-10 bg-paper ring-1 ring-line">
+                      <summary className="cursor-pointer px-6 py-4 font-semibold text-navy">Terms and conditions</summary>
+                      <ul className="space-y-2 px-6 pb-6 text-sm leading-relaxed text-muted">
+                        {pkg.terms.map((term) => (
+                          <li key={term}>{term}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </section>
+              )}
 
               <ReviewsSection pkg={pkg} />
             </div>
@@ -184,7 +207,7 @@ export function PackageView({
           <div className="sticky bottom-0 z-30 mt-12 border-t border-line bg-paper/95 backdrop-blur-lg lg:hidden">
             <div className="shell flex items-center justify-between gap-4 py-3">
               <TripTotal />
-              <DownloadItineraryButton pdf={pkg.pdf} compact />
+              <DownloadItineraryButton pdf={pkg.pdf} pdfWithoutLogo={pkg.pdfWithoutLogo} compact />
             </div>
           </div>
         </div>

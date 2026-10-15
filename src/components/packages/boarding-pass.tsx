@@ -76,7 +76,7 @@ export function BoardingPass({
       <Perforation />
 
       <div className="p-(--pad)">
-        <DownloadItineraryButton pdf={pkg.pdf} />
+        <DownloadItineraryButton pdf={pkg.pdf} pdfWithoutLogo={pkg.pdfWithoutLogo} />
         {/* Below 400px the contact button gets its own row, with share and save under it. */}
         <div className="mt-4 flex flex-wrap gap-3">
           <TripEnquiryButton branch={branch} message={enquiry} className="flex-1 max-[400px]:basis-full" />

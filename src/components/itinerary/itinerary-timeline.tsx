@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Bed, ForkKnife } from "@phosphor-icons/react/dist/ssr";
 import type { ItineraryDay } from "@/types";
 import { formatClock } from "@/lib/format";
@@ -21,6 +22,18 @@ export function ItineraryTimeline({ days }: { days: ItineraryDay[] }) {
           <div className="pt-1 sm:pt-2">
             <h3 className="text-xl font-semibold tracking-tight text-navy">{day.title}</h3>
             {day.description && <p className="mt-2.5 max-w-[62ch] leading-relaxed text-muted">{day.description}</p>}
+            {day.photo && (
+              <div className="leaf-md relative mt-4 aspect-[4/3] max-w-xl overflow-hidden bg-frost sm:aspect-[16/10]">
+                <Image
+                  src={day.photo.src}
+                  alt={day.photo.alt}
+                  fill
+                  sizes="(min-width: 640px) 36rem, calc(100vw - 7rem)"
+                  style={{ objectPosition: day.photo.position }}
+                  className="object-cover"
+                />
+              </div>
+            )}
             {day.timeline.length > 0 && (
               <ol className="mt-4 space-y-2 border-l-2 border-dotted border-line pl-4">
                 {day.timeline.map((item, i) => (

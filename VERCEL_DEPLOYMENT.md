@@ -50,7 +50,8 @@ The website holds no database URL, auth secret, JWT secret or admin credentials.
 - photos: on GETSET's Cloudinary account (`https://res.cloudinary.com/<cloud>/image/upload/...`, the URLs the API
   returns), resized by Vercel's image optimiser; only that account's image path, and the API's own `/media/...` path
   (used when the API stores files locally), are allowed,
-- itinerary PDFs (uploaded in the admin): `<NEXT_PUBLIC_API_URL>/api/public/packages/<slug>/pdf`, downloaded straight
+- itinerary PDFs (uploaded in the admin): `<NEXT_PUBLIC_API_URL>/api/public/packages/<slug>/pdf` (with logo) and
+  `...pdf?branding=without-logo`, downloaded straight
   from the API (it sends `Content-Disposition: attachment`); a package without one answers 404 and its page shows
   "not available yet".
 

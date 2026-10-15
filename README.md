@@ -43,8 +43,9 @@ src/
 - **Traveller pricing.** Adults, children and infants are priced from the package's price table
   (`lib/pricing.ts`, the same rule as the API's quote endpoint). The WhatsApp enquiry carries the party and the
   estimate in the selected currency; the enquiry form sends both to the API.
-- **PDFs.** Each package's itinerary PDF is uploaded in the admin; the download button links to the API, which streams
-  it from private storage. A package without one shows "not available yet" instead of a button.
+- **PDFs.** Each package's itinerary PDF is uploaded in the admin, with the GETSET logo and optionally without it; the
+  download buttons link to the API, which streams them from private storage. With both, the customer chooses; a
+  package without any shows "not available yet" instead of a button.
 - **Missing images** fall back to `public/images/placeholder.jpg` rather than breaking a page.
 
 ## Discovery flow

@@ -1,30 +1,46 @@
 import { DownloadSimple, FilePdf } from "@phosphor-icons/react/dist/ssr";
-import type { TourPackage } from "@/types";
-import { button } from "@/components/ui/button";
-
-type Pdf = TourPackage["pdf"];
+import type { ItineraryPdf } from "@/types";
+import { button, type ButtonVariant } from "@/components/ui/button";
 
 /*
- * The itinerary PDF uploaded by the GETSET team, downloaded through the API (which streams it from private storage).
- * A package without one shows a plain "not available yet" state instead of a dead link.
+ * The itinerary PDFs uploaded by the GETSET team, downloaded through the API (which streams them from private storage):
+ * with the logo and, when uploaded, without it. With both, the customer chooses; with one, it is a single button.
+ * A package without any shows a plain "not available yet" state instead of a dead link.
  */
 
 const size = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`);
 
+function PdfButton({ href, label, variant }: { href: string; label: string; variant: ButtonVariant }) {
+  return (
+    // Cross-origin: the API's Content-Disposition header makes this a download.
+    <a href={href} className={button({ variant, size: "lg", className: "w-full" })}>
+      <DownloadSimple aria-hidden weight="bold" className="size-5" />
+      {/* "Download" is implied by the icon on the narrowest phones; screen readers always hear it. */}
+      <span>
+        <span className="max-[400px]:sr-only">Download </span>
+        {label}
+      </span>
+    </a>
+  );
+}
+
 export function DownloadItineraryButton({
   pdf,
+  pdfWithoutLogo,
   compact = false,
   className = "",
 }: {
-  pdf: Pdf;
-  /** A short button, for tight spots like the mobile booking bar. */
+  pdf: ItineraryPdf | null;
+  pdfWithoutLogo: ItineraryPdf | null;
+  /** One short button (the version with the logo when there is one), for tight spots like the mobile booking bar. */
   compact?: boolean;
   className?: string;
 }) {
+  const only = pdf ?? pdfWithoutLogo;
+
   if (compact) {
-    return pdf ? (
-      // Cross-origin: the API's Content-Disposition header makes this a download.
-      <a href={pdf.url} aria-label="Download itinerary (PDF)" className={button({ className })}>
+    return only ? (
+      <a href={only.url} aria-label="Download itinerary (PDF)" className={button({ className })}>
         <DownloadSimple aria-hidden weight="bold" className="size-5" />
         Itinerary PDF
       </a>
@@ -38,7 +54,7 @@ export function DownloadItineraryButton({
     );
   }
 
-  if (!pdf) {
+  if (!only) {
     return (
       <div className={className}>
         <p className="flex items-start gap-3 rounded-xl border border-line px-4 py-3.5 text-sm text-muted">
@@ -52,15 +68,30 @@ export function DownloadItineraryButton({
     );
   }
 
+  if (pdf && pdfWithoutLogo) {
+    return (
+      <div className={className}>
+        <div className="grid gap-3">
+          <PdfButton href={pdf.url} label="PDF with logo" variant="primary" />
+          <PdfButton href={pdfWithoutLogo.url} label="PDF without logo" variant="outline" />
+        </div>
+        <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted">
+          <FilePdf aria-hidden weight="bold" className="size-4" />
+          Same itinerary in both · {size(pdf.sizeBytes)} and {size(pdfWithoutLogo.sizeBytes)}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
-      <a href={pdf.url} className={button({ size: "lg", className: "w-full" })}>
+      <a href={only.url} className={button({ size: "lg", className: "w-full" })}>
         <DownloadSimple aria-hidden weight="bold" className="size-5" />
         Download itinerary (PDF)
       </a>
       <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted">
         <FilePdf aria-hidden weight="bold" className="size-4" />
-        PDF, {size(pdf.sizeBytes)}
+        PDF{pdf ? "" : " without logo"}, {size(only.sizeBytes)}
       </p>
     </div>
   );

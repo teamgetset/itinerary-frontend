@@ -1,6 +1,7 @@
 import type {
   Branch,
   Destination,
+  ItineraryPdf,
   Meal,
   PackageSummary,
   Photo,
@@ -90,18 +91,23 @@ export interface DetailDto extends SummaryDto {
     stay: string | null;
     meals: ("BREAKFAST" | "LUNCH" | "DINNER")[];
     hotel: { name: string } | null;
+    image: ImageDto | null;
     activities: { time: string | null; title: string; description: string | null; location: string | null }[];
   }[];
   inclusions: { title: string }[];
   exclusions: { title: string }[];
   hotels: { name: string; starCategory: number | null; location: string; nights: number; isDefault: boolean }[];
   prices: PriceTable;
+  /** Missing from an API older than "Good to know". */
+  goodToKnow?: { title: string; description: string | null }[];
   importantInfo: string[];
   terms: string[];
   destination: DestinationDto;
   branch: BranchDto;
   reviews: { customerName: string; rating: number; review: string; source: { date: string | null } | null }[];
-  pdf: { url: string; sizeBytes: number; updatedAt: string } | null;
+  pdf: ItineraryPdf | null;
+  /** Missing from an API older than the second version. */
+  pdfWithoutLogo?: ItineraryPdf | null;
   seo: SeoDto;
 }
 
@@ -198,6 +204,7 @@ export function toPackage(dto: DetailDto): TourPackage {
       ...(day.stay && { stay: day.stay }),
       ...(day.hotel && { hotel: day.hotel.name }),
       ...(day.meals.length && { meals: day.meals.map((meal) => MEALS[meal]!) }),
+      ...(day.image && { photo: photo(day.image) }),
       timeline: day.activities,
     })),
     inclusions: dto.inclusions.map((item) => item.title),
@@ -210,6 +217,7 @@ export function toPackage(dto: DetailDto): TourPackage {
         ...(hotel.starCategory && { category: `${hotel.starCategory}-star` }),
       })),
     }),
+    goodToKnow: (dto.goodToKnow ?? []).map(({ title, description }) => ({ title, ...(description && { description }) })),
     importantInfo: dto.importantInfo,
     terms: dto.terms,
     reviews: dto.reviews.map((review) => ({
@@ -219,6 +227,7 @@ export function toPackage(dto: DetailDto): TourPackage {
       ...(review.source?.date && { date: review.source.date }),
     })),
     pdf: dto.pdf,
+    pdfWithoutLogo: dto.pdfWithoutLogo ?? null,
     seo: seo(dto.seo),
   };
 }

@@ -20,6 +20,13 @@ export type TravellerType = "ADULT" | "CHILD" | "INFANT";
 /** Price per traveller type and currency. */
 export type PriceTable = Record<TravellerType, Prices>;
 
+/** An uploaded itinerary PDF, downloaded through the API. */
+export interface ItineraryPdf {
+  url: string;
+  sizeBytes: number;
+  updatedAt: string;
+}
+
 export interface Photo {
   src: string;
   alt: string;
@@ -89,6 +96,8 @@ export interface ItineraryDay {
   /** The hotel for that night, when set. */
   hotel?: string;
   meals?: Meal[];
+  /** The day's photo, when one is set in the admin. */
+  photo?: Photo;
   timeline: TimelineItem[];
 }
 
@@ -160,11 +169,16 @@ export interface TourPackage {
   keywords: string[];
   /** Confirmed hotels. Without them, the page lists stays derived from the itinerary. */
   hotels?: Hotel[];
+  /** Practical tips for this trip, shown under "Good to know" after the destination's travel facts. */
+  goodToKnow: { title: string; description?: string }[];
+  /** The notes for every package, then this package's own. */
   importantInfo: string[];
   terms: string[];
   reviews: Review[];
-  /** The uploaded itinerary PDF, downloaded through the API; null when the package has none yet. */
-  pdf: { url: string; sizeBytes: number; updatedAt: string } | null;
+  /** The uploaded itinerary PDF with the GETSET logo; null when the package has none yet. */
+  pdf: ItineraryPdf | null;
+  /** The same itinerary without the logo; null when it has not been uploaded. */
+  pdfWithoutLogo: ItineraryPdf | null;
   seo: Seo;
 }
 
