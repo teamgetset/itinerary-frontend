@@ -97,7 +97,7 @@ export async function DestinationHub({ slug }: { slug: string }) {
               >
                 <span className="font-medium text-ink">{experience.name}</span>
                 <span className="shrink-0 text-sm text-muted">
-                  from <Price prices={experience.prices} className="font-semibold text-navy" />
+                  <Price prices={experience.prices} before="from " className="font-semibold text-navy" />
                 </span>
               </li>
             ))}

@@ -32,6 +32,8 @@ export function PackageView({
 }) {
   const preview = previewStatus !== undefined;
   const branch = pkg.branch;
+  // Made from the published page; a draft preview has none (its page is not public yet).
+  const generatedPdf = preview ? undefined : `/packages/${pkg.slug}/itinerary.pdf`;
   return (
     <>
       {/* Traveller counts are shared by the boarding pass and the mobile booking bar. */}
@@ -72,74 +74,89 @@ export function PackageView({
 
             <aside className="lg:col-span-5 lg:col-start-8 lg:row-span-3 lg:row-start-1 2xl:col-span-4 2xl:col-start-9">
               <StickyPanel>
-                <BoardingPass pkg={pkg} enquiry={enquiry} />
+                <BoardingPass pkg={pkg} enquiry={enquiry} generatedPdf={generatedPdf} />
               </StickyPanel>
             </aside>
 
             <div className="mt-6 lg:col-span-7 lg:row-start-3 2xl:col-span-8">
-              <section aria-labelledby="overview" className={sectionClass}>
-                <h2 id="overview" className={headingClass}>
-                  Overview
-                </h2>
-                <div className="mt-6 max-w-[65ch] space-y-4 text-lg leading-relaxed text-ink">
-                  {pkg.overview.map((paragraph) => (
-                    <p key={paragraph}>{paragraph}</p>
-                  ))}
-                </div>
-                <ul className="mt-10 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                  {pkg.highlights.map((highlight) => (
-                    <li key={highlight} className="flex gap-3 text-ink">
-                      <span className="leaf-xs mt-0.5 grid size-6 shrink-0 place-items-center bg-sun text-night">
-                        <Check aria-hidden weight="bold" className="size-3.5" />
-                      </span>
-                      {highlight}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {(pkg.overview.length > 0 || pkg.highlights.length > 0) && (
+                <section aria-labelledby="overview" className={sectionClass}>
+                  <h2 id="overview" className={headingClass}>
+                    Overview
+                  </h2>
+                  {pkg.overview.length > 0 && (
+                    <div className="mt-6 max-w-[65ch] space-y-4 text-lg leading-relaxed text-ink">
+                      {pkg.overview.map((paragraph) => (
+                        <p key={paragraph}>{paragraph}</p>
+                      ))}
+                    </div>
+                  )}
+                  {pkg.highlights.length > 0 && (
+                    <ul className="mt-10 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                      {pkg.highlights.map((highlight) => (
+                        <li key={highlight} className="flex gap-3 text-ink">
+                          <span className="leaf-xs mt-0.5 grid size-6 shrink-0 place-items-center bg-sun text-night">
+                            <Check aria-hidden weight="bold" className="size-3.5" />
+                          </span>
+                          {highlight}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              )}
 
-              <section aria-labelledby="itinerary" className={sectionClass}>
-                <h2 id="itinerary" className={headingClass}>
-                  Day by day
-                </h2>
-                <div className="mt-10">
-                  <ItineraryTimeline days={pkg.itinerary} />
-                </div>
-              </section>
+              {pkg.itinerary.length > 0 && (
+                <section aria-labelledby="itinerary" className={sectionClass}>
+                  <h2 id="itinerary" className={headingClass}>
+                    Day by day
+                  </h2>
+                  <div className="mt-10">
+                    <ItineraryTimeline days={pkg.itinerary} />
+                  </div>
+                </section>
+              )}
 
               <StaysSection pkg={pkg} />
 
               <ActivitiesSection pkg={pkg} />
 
-              <section aria-labelledby="included" className={sectionClass}>
-                <h2 id="included" className={headingClass}>
-                  What&apos;s included
-                </h2>
-                <div className="mt-8 grid gap-6 md:grid-cols-2">
-                  <div className="leaf-md bg-paper p-6 ring-1 ring-line sm:p-8">
-                    <h3 className="font-semibold text-navy">Included</h3>
-                    <ul className="mt-5 space-y-3.5">
-                      {pkg.inclusions.map((item) => (
-                        <li key={item} className="flex gap-3 text-ink">
-                          <Check aria-hidden weight="bold" className="mt-1 size-4 shrink-0 text-cobalt" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
+              {/* Each list only when it has items; the section only when either does. */}
+              {(pkg.inclusions.length > 0 || pkg.exclusions.length > 0) && (
+                <section aria-labelledby="included" className={sectionClass}>
+                  <h2 id="included" className={headingClass}>
+                    What&apos;s included
+                  </h2>
+                  <div className="mt-8 grid gap-6 md:grid-cols-2">
+                    {pkg.inclusions.length > 0 && (
+                      <div className="leaf-md bg-paper p-6 ring-1 ring-line sm:p-8">
+                        <h3 className="font-semibold text-navy">Included</h3>
+                        <ul className="mt-5 space-y-3.5">
+                          {pkg.inclusions.map((item) => (
+                            <li key={item} className="flex gap-3 text-ink">
+                              <Check aria-hidden weight="bold" className="mt-1 size-4 shrink-0 text-cobalt" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {pkg.exclusions.length > 0 && (
+                      <div className="leaf-md p-6 ring-1 ring-line sm:p-8">
+                        <h3 className="font-semibold text-navy">Not included</h3>
+                        <ul className="mt-5 space-y-3.5">
+                          {pkg.exclusions.map((item) => (
+                            <li key={item} className="flex gap-3 text-muted">
+                              <X aria-hidden weight="bold" className="mt-1 size-4 shrink-0" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
-                  <div className="leaf-md p-6 ring-1 ring-line sm:p-8">
-                    <h3 className="font-semibold text-navy">Not included</h3>
-                    <ul className="mt-5 space-y-3.5">
-                      {pkg.exclusions.map((item) => (
-                        <li key={item} className="flex gap-3 text-muted">
-                          <X aria-hidden weight="bold" className="mt-1 size-4 shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </section>
+                </section>
+              )}
 
               {(pkg.destination.facts.length > 0 || pkg.goodToKnow.length > 0) && (
                 <section aria-labelledby="good-to-know" className={sectionClass}>
@@ -211,7 +228,7 @@ export function PackageView({
           <div className="sticky bottom-0 z-30 mt-12 border-t border-line bg-paper/95 backdrop-blur-lg lg:hidden">
             <div className="shell flex items-center justify-between gap-4 py-3">
               <TripTotal />
-              <DownloadItineraryButton pdf={pkg.pdf} pdfWithoutLogo={pkg.pdfWithoutLogo} compact />
+              <DownloadItineraryButton pdf={pkg.pdf} pdfWithoutLogo={pkg.pdfWithoutLogo} generated={generatedPdf} compact />
             </div>
           </div>
         </div>

@@ -57,11 +57,27 @@ export function setActiveCurrency(code: string) {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
+/** Words around a price ("From ", " each"), styled like the text the price sits in. */
+const PRICE_WORDS = "text-sm font-normal text-muted";
+
 /**
- * An amount in every currency; CSS shows the selected one. Missing prices read "On request".
- * The symbol is bidi-isolated so right-to-left symbols (د.إ) sit correctly before the number.
+ * An amount in every currency; CSS shows the selected one. A missing price reads "On request" (or `missing`), and the
+ * words around it (`before`, `after`) appear only next to an actual amount, so a package without a price never reads
+ * "From On request". The symbol is bidi-isolated so right-to-left symbols (د.إ) sit correctly before the number.
  */
-export function Price({ prices, className }: { prices: Prices; className?: string }) {
+export function Price({
+  prices,
+  className,
+  before,
+  after,
+  missing = "On request",
+}: {
+  prices: Prices;
+  className?: string;
+  before?: string;
+  after?: string;
+  missing?: string;
+}) {
   const { currencies } = useCurrencies();
   return (
     <span className={className}>
@@ -70,11 +86,13 @@ export function Price({ prices, className }: { prices: Prices; className?: strin
         return (
           <span key={currency.code} data-price={currency.code}>
             {amount === undefined ? (
-              "On request"
+              missing
             ) : (
               <>
+                {before && <span className={PRICE_WORDS}>{before}</span>}
                 <bdi>{currency.symbol}</bdi>
                 {formatAmount(amount, currency)}
+                {after && <span className={PRICE_WORDS}>{after}</span>}
               </>
             )}
           </span>

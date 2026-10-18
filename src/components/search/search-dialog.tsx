@@ -142,7 +142,7 @@ export function SearchDialog() {
                     </span>
                   </span>
                   <span className="hidden text-sm whitespace-nowrap text-muted sm:block">
-                    From <Price prices={pkg.startingPrice} className="font-semibold text-navy" />
+                    <Price prices={pkg.startingPrice} before="From " missing="Price on request" className="font-semibold text-navy" />
                   </span>
                 </Link>
               </li>

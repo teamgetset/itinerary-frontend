@@ -5,7 +5,8 @@ import { button, type ButtonVariant } from "@/components/ui/button";
 /*
  * The itinerary PDFs uploaded by the GETSET team, downloaded through the API (which streams them from private storage):
  * with the logo and, when uploaded, without it. With both, the customer chooses; with one, it is a single button.
- * A package without any shows a plain "not available yet" state instead of a dead link.
+ * A package without any offers the PDF made from its page instead (`generated`); where there is none either (admin
+ * previews of drafts), a plain "not available yet" state instead of a dead link.
  */
 
 const size = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`);
@@ -27,11 +28,14 @@ function PdfButton({ href, label, variant }: { href: string; label: string; vari
 export function DownloadItineraryButton({
   pdf,
   pdfWithoutLogo,
+  generated,
   compact = false,
   className = "",
 }: {
   pdf: ItineraryPdf | null;
   pdfWithoutLogo: ItineraryPdf | null;
+  /** The PDF made from the package page (app/packages/[slug]/itinerary.pdf), used when none is uploaded. */
+  generated?: string;
   /** One short button (the version with the logo when there is one), for tight spots like the mobile booking bar. */
   compact?: boolean;
   className?: string;
@@ -39,8 +43,9 @@ export function DownloadItineraryButton({
   const only = pdf ?? pdfWithoutLogo;
 
   if (compact) {
-    return only ? (
-      <a href={only.url} aria-label="Download itinerary (PDF)" className={button({ className })}>
+    const href = only?.url ?? generated;
+    return href ? (
+      <a href={href} aria-label="Download itinerary (PDF)" className={button({ className })}>
         <DownloadSimple aria-hidden weight="bold" className="size-5" />
         Itinerary PDF
       </a>
@@ -51,6 +56,21 @@ export function DownloadItineraryButton({
           <span className="sr-only">Itinerary </span>PDF not available
         </span>
       </span>
+    );
+  }
+
+  if (!only && generated) {
+    return (
+      <div className={className}>
+        <a href={generated} className={button({ size: "lg", className: "w-full" })}>
+          <DownloadSimple aria-hidden weight="bold" className="size-5" />
+          Download itinerary (PDF)
+        </a>
+        <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted">
+          <FilePdf aria-hidden weight="bold" className="size-4" />
+          Day-by-day plan, prices and inclusions
+        </p>
+      </div>
     );
   }
 

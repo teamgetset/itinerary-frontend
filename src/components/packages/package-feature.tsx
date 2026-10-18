@@ -53,7 +53,7 @@ export function PackageFeature({ pkg }: { pkg: TourPackage }) {
           <p className="text-sm text-muted">
             {formatDuration(pkg.duration)}
             <span className="mt-1 block">
-              From <Price prices={pkg.startingPrice} className="text-xl font-semibold text-navy" />
+              <Price prices={pkg.startingPrice} before="From " missing="Price on request" className="text-xl font-semibold text-navy" />
             </span>
           </p>
           <span

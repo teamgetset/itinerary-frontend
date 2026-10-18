@@ -34,6 +34,8 @@ const nextConfig: NextConfig = {
     // The local development API runs on localhost, which the optimiser blocks by default.
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production" && ["localhost", "127.0.0.1"].includes(apiUrl.hostname),
   },
+  // The generated itinerary PDF reads the logo from disk.
+  outputFileTracingIncludes: { "/packages/*/itinerary.pdf": ["./src/assets/brand/getset-logo.png"] },
   async redirects() {
     // Destination pages moved to /destinations/<slug>; keep the old addresses working.
     return [

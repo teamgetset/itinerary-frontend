@@ -24,10 +24,13 @@ function Perforation() {
 export function BoardingPass({
   pkg,
   enquiry,
+  generatedPdf,
 }: {
   pkg: TourPackage;
   /** Opening line of the WhatsApp enquiry. */
   enquiry: string;
+  /** The PDF made from the package page, offered when none is uploaded. */
+  generatedPdf?: string;
 }) {
   const { from, to } = pkg.route;
   const { branch } = pkg;
@@ -61,10 +64,12 @@ export function BoardingPass({
           <dt className="type-label text-muted">Duration</dt>
           <dd className="mt-1.5 font-semibold text-navy">{formatDuration(pkg.duration)}</dd>
         </div>
-        <div>
-          <dt className="type-label text-muted">Best time</dt>
-          <dd className="mt-1.5 font-semibold text-navy">{pkg.bestTime ?? "All year"}</dd>
-        </div>
+        {pkg.bestTime && (
+          <div>
+            <dt className="type-label text-muted">Best time</dt>
+            <dd className="mt-1.5 font-semibold text-navy">{pkg.bestTime}</dd>
+          </div>
+        )}
       </dl>
 
       <Perforation />
@@ -76,7 +81,7 @@ export function BoardingPass({
       <Perforation />
 
       <div className="p-(--pad)">
-        <DownloadItineraryButton pdf={pkg.pdf} pdfWithoutLogo={pkg.pdfWithoutLogo} />
+        <DownloadItineraryButton pdf={pkg.pdf} pdfWithoutLogo={pkg.pdfWithoutLogo} generated={generatedPdf} />
         {/* Below 400px the contact button gets its own row, with share and save under it. */}
         <div className="mt-4 flex flex-wrap gap-3">
           <TripEnquiryButton branch={branch} message={enquiry} className="flex-1 max-[400px]:basis-full" />

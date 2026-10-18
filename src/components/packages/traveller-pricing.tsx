@@ -73,7 +73,7 @@ export function TravellerSelector() {
                   {label} <span className="ml-0.5 text-sm font-normal text-muted">{ages}</span>
                 </p>
                 <p className="mt-0.5 text-sm text-muted">
-                  <Price prices={prices[priceType]} /> each
+                  <Price prices={prices[priceType]} after=" each" />
                 </p>
               </div>
               <div className="flex items-center gap-1">
