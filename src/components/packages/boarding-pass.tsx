@@ -1,7 +1,7 @@
 import { Airplane } from "@phosphor-icons/react/dist/ssr";
 import type { TourPackage } from "@/types";
 import { formatDuration } from "@/lib/format";
-import { DownloadItineraryButton } from "@/components/itinerary/download-itinerary-button";
+import { DownloadItineraryButton, type GeneratedPdfs } from "@/components/itinerary/download-itinerary-button";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
 import { ShareButton } from "@/components/shared/share-button";
 import { EnquiryDialog } from "./enquiry-dialog";
@@ -29,8 +29,8 @@ export function BoardingPass({
   pkg: TourPackage;
   /** Opening line of the WhatsApp enquiry. */
   enquiry: string;
-  /** The PDF made from the package page, offered when none is uploaded. */
-  generatedPdf?: string;
+  /** The PDFs made from the package page, offered for a version that is not uploaded. */
+  generatedPdf?: GeneratedPdfs;
 }) {
   const { from, to } = pkg.route;
   const { branch } = pkg;

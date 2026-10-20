@@ -33,7 +33,9 @@ export function PackageView({
   const preview = previewStatus !== undefined;
   const branch = pkg.branch;
   // Made from the published page; a draft preview has none (its page is not public yet).
-  const generatedPdf = preview ? undefined : `/packages/${pkg.slug}/itinerary.pdf`;
+  const generatedPdf = preview
+    ? undefined
+    : { withLogo: `/packages/${pkg.slug}/itinerary.pdf`, withoutLogo: `/packages/${pkg.slug}/itinerary-without-logo.pdf` };
   return (
     <>
       {/* Traveller counts are shared by the boarding pass and the mobile booking bar. */}

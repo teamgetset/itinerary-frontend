@@ -3,24 +3,26 @@ import type { ItineraryPdf } from "@/types";
 import { button, type ButtonVariant } from "@/components/ui/button";
 
 /*
- * The itinerary PDFs uploaded by the GETSET team, downloaded through the API (which streams them from private storage):
- * with the logo and, when uploaded, without it. With both, the customer chooses; with one, it is a single button.
- * A package without any offers the PDF made from its page instead (`generated`); where there is none either (admin
- * previews of drafts), a plain "not available yet" state instead of a dead link.
+ * The itinerary download, in two versions: with the GETSET logo, and without it. Each version is the PDF uploaded by
+ * the GETSET team when there is one (downloaded through the API, which streams it from private storage), otherwise
+ * the PDF made from the package page (`generated`). Where neither exists (admin previews of drafts), a plain
+ * "not available yet" state instead of a dead link.
  */
 
 const size = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`);
 
+/** The PDFs made from the package page (app/packages/[slug]/itinerary.pdf and itinerary-without-logo.pdf). */
+export interface GeneratedPdfs {
+  withLogo: string;
+  withoutLogo: string;
+}
+
 function PdfButton({ href, label, variant }: { href: string; label: string; variant: ButtonVariant }) {
   return (
-    // Cross-origin: the API's Content-Disposition header makes this a download.
+    // The response's Content-Disposition header (the API's, or the generated PDF's) makes this a download.
     <a href={href} className={button({ variant, size: "lg", className: "w-full" })}>
       <DownloadSimple aria-hidden weight="bold" className="size-5" />
-      {/* "Download" is implied by the icon on the narrowest phones; screen readers always hear it. */}
-      <span>
-        <span className="max-[400px]:sr-only">Download </span>
-        {label}
-      </span>
+      {label}
     </a>
   );
 }
@@ -34,16 +36,17 @@ export function DownloadItineraryButton({
 }: {
   pdf: ItineraryPdf | null;
   pdfWithoutLogo: ItineraryPdf | null;
-  /** The PDF made from the package page (app/packages/[slug]/itinerary.pdf), used when none is uploaded. */
-  generated?: string;
+  /** The PDFs made from the package page, used for a version that is not uploaded. */
+  generated?: GeneratedPdfs;
   /** One short button (the version with the logo when there is one), for tight spots like the mobile booking bar. */
   compact?: boolean;
   className?: string;
 }) {
-  const only = pdf ?? pdfWithoutLogo;
+  const withLogo = pdf?.url ?? generated?.withLogo;
+  const withoutLogo = pdfWithoutLogo?.url ?? generated?.withoutLogo;
 
   if (compact) {
-    const href = only?.url ?? generated;
+    const href = withLogo ?? withoutLogo;
     return href ? (
       <a href={href} aria-label="Download itinerary (PDF)" className={button({ className })}>
         <DownloadSimple aria-hidden weight="bold" className="size-5" />
@@ -59,22 +62,7 @@ export function DownloadItineraryButton({
     );
   }
 
-  if (!only && generated) {
-    return (
-      <div className={className}>
-        <a href={generated} className={button({ size: "lg", className: "w-full" })}>
-          <DownloadSimple aria-hidden weight="bold" className="size-5" />
-          Download itinerary (PDF)
-        </a>
-        <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted">
-          <FilePdf aria-hidden weight="bold" className="size-4" />
-          Day-by-day plan, prices and inclusions
-        </p>
-      </div>
-    );
-  }
-
-  if (!only) {
+  if (!withLogo && !withoutLogo) {
     return (
       <div className={className}>
         <p className="flex items-start gap-3 rounded-xl border border-line px-4 py-3.5 text-sm text-muted">
@@ -88,30 +76,15 @@ export function DownloadItineraryButton({
     );
   }
 
-  if (pdf && pdfWithoutLogo) {
-    return (
-      <div className={className}>
-        <div className="grid gap-3">
-          <PdfButton href={pdf.url} label="PDF with logo" variant="primary" />
-          <PdfButton href={pdfWithoutLogo.url} label="PDF without logo" variant="outline" />
-        </div>
-        <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted">
-          <FilePdf aria-hidden weight="bold" className="size-4" />
-          Same itinerary in both · {size(pdf.sizeBytes)} and {size(pdfWithoutLogo.sizeBytes)}
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className={className}>
-      <a href={only.url} className={button({ size: "lg", className: "w-full" })}>
-        <DownloadSimple aria-hidden weight="bold" className="size-5" />
-        Download itinerary (PDF)
-      </a>
+      <div className="grid gap-3">
+        {withLogo && <PdfButton href={withLogo} label="Download itinerary (PDF)" variant="primary" />}
+        {withoutLogo && <PdfButton href={withoutLogo} label="Download without logo" variant={withLogo ? "outline" : "primary"} />}
+      </div>
       <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted">
         <FilePdf aria-hidden weight="bold" className="size-4" />
-        PDF{pdf ? "" : " without logo"}, {size(only.sizeBytes)}
+        {pdf && pdfWithoutLogo ? `Same itinerary in both · ${size(pdf.sizeBytes)} and ${size(pdfWithoutLogo.sizeBytes)}` : "Day-by-day plan, prices and inclusions"}
       </p>
     </div>
   );

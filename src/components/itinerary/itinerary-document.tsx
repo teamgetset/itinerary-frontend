@@ -6,8 +6,8 @@ import { TRAVELLER_TYPES } from "@/lib/pricing";
 
 /*
  * The itinerary PDF generated from the package page's content, for packages without an uploaded PDF
- * (served by app/packages/[slug]/itinerary.pdf). Same data and same rules as the page: a section without
- * content is left out, nothing is invented.
+ * (served by app/packages/[slug]/itinerary.pdf, and itinerary-without-logo.pdf). Same data and same rules as the
+ * page: a section without content is left out, nothing is invented.
  */
 
 export interface PdfPicture {
@@ -79,6 +79,7 @@ const s = StyleSheet.create({
   footer: { position: "absolute", left: 40, right: 40, bottom: 24, flexDirection: "row", justifyContent: "space-between", fontSize: 7.5, color: C.muted },
 });
 
+const BRAND = "GETSET Tours & Travels";
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
 /** A section whose heading stays on the same page as its first block (never alone at the bottom of a page). */
@@ -139,7 +140,8 @@ export function ItineraryDocument({
   pkg: TourPackage;
   /** The site's currencies, in its order: one price column each. */
   currencies: Currency[];
-  logo: PdfPicture;
+  /** Null for the version without the logo: no GETSET logo or name, the same content and page breaks otherwise. */
+  logo: PdfPicture | null;
   hero: PdfPicture | null;
   /** By itinerary day, in order; null where a day has no photo or it could not be loaded. */
   dayPhotos: (PdfPicture | null)[];
@@ -189,11 +191,12 @@ export function ItineraryDocument({
   };
 
   return (
-    <Document title={`${pkg.title} itinerary`} author="GETSET Tours & Travels" subject={pkg.tagline} creator="GETSET Tours & Travels" language="en">
+    <Document title={`${pkg.title} itinerary`} author={logo ? BRAND : undefined} subject={pkg.tagline} creator={logo ? BRAND : undefined} language="en">
       <Page size="A4" style={s.page}>
         <>
           <View style={s.head}>
-            <PdfImage src={logo} style={s.logo} />
+            {/* Without the logo its space is kept, so both versions lay out and break pages the same way. */}
+            {logo ? <PdfImage src={logo} style={s.logo} /> : <View style={s.logo} />}
             <Text style={s.tag}>{`${branch.name.toUpperCase()} BRANCH ITINERARY`}</Text>
           </View>
 
@@ -384,7 +387,7 @@ export function ItineraryDocument({
         </>
 
         <View style={s.footer} fixed>
-          <Text>{`GETSET Tours & Travels  ·  ${pkg.title}  ·  Details as of ${asOf}`}</Text>
+          <Text>{`${logo ? `${BRAND}  ·  ` : ""}${pkg.title}  ·  Details as of ${asOf}`}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
         </View>
       </Page>

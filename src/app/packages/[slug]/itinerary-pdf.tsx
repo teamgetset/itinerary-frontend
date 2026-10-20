@@ -8,12 +8,10 @@ import { getSettings } from "@/services/settings";
 import { ItineraryDocument, type PdfPicture } from "@/components/itinerary/itinerary-document";
 
 /*
- * The itinerary PDF made from the package page's content, offered when no PDF has been uploaded in the admin.
- * Made on its first download, then cached like the page: refreshed when the admin changes the catalogue, and hourly.
+ * The itinerary PDF made from the package page's content, offered for a version (with or without the logo) that has
+ * not been uploaded in the admin. Served by itinerary.pdf and itinerary-without-logo.pdf: each is made on its first
+ * download, then cached like the page, refreshed when the admin changes the catalogue, and hourly.
  */
-export const dynamic = "force-static";
-export const revalidate = 3600;
-export const generateStaticParams = async () => [];
 
 /** Included in the deployed function by next.config.ts (outputFileTracingIncludes). */
 const LOGO = join(process.cwd(), "src/assets/brand/getset-logo.png");
@@ -35,13 +33,13 @@ async function picture(src: string | undefined, width: number): Promise<PdfPictu
   }
 }
 
-export async function GET(_request: Request, { params }: RouteContext<"/packages/[slug]/itinerary.pdf">) {
-  const { slug } = await params;
+/** The PDF download for a package; `withLogo` false leaves out the GETSET logo and name, nothing else. */
+export async function itineraryPdf(slug: string, withLogo: boolean) {
   const [pkg, settings] = await Promise.all([getPackage(slug), getSettings()]);
   if (!pkg) return new Response("Package not found", { status: 404 });
 
   const [logo, hero, ...dayPhotos] = await Promise.all([
-    readFile(LOGO).then((data): PdfPicture => ({ data, format: "png" })),
+    withLogo ? readFile(LOGO).then((data): PdfPicture => ({ data, format: "png" })) : null,
     picture(pkg.cover.src, 1200),
     ...pkg.itinerary.map((day) => picture(day.photo?.src, 500)),
   ]);
@@ -59,7 +57,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/packages
   return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${pkg.slug}-itinerary.pdf"`,
+      "Content-Disposition": `attachment; filename="${pkg.slug}-itinerary${withLogo ? "" : "-without-logo"}.pdf"`,
       "X-Content-Type-Options": "nosniff",
     },
   });
