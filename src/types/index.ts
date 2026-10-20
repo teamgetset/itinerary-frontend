@@ -68,6 +68,8 @@ export interface Destination {
   kind: "country" | "place";
   country: Country;
   summary: string;
+  /** The admin's longer introduction ("About the destination"), in paragraphs; empty when none is written. */
+  about: string[];
   hero: Photo;
   /** Travel facts shown on hub and package pages: currency, visa, flight time. */
   facts: Fact[];

@@ -89,6 +89,8 @@ export interface DestinationDto {
   kind: "COUNTRY" | "PLACE";
   country: { code: string; name: string };
   shortDescription: string;
+  /** Paragraphs separated by blank lines. */
+  description?: string;
   heroImage: ImageDto | null;
   facts: { label: string; value: string }[];
   experiences?: { name: string; prices: Prices }[];
@@ -248,6 +250,7 @@ export function toDestination(dto: DestinationDto): Destination {
     kind: dto.kind === "COUNTRY" ? "country" : "place",
     country: dto.country,
     summary: dto.shortDescription,
+    about: (dto.description ?? "").split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean),
     hero: photo(dto.heroImage),
     facts: dto.facts,
     ...(dto.experiences && { experiences: dto.experiences }),

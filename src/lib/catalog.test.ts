@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseWishlist } from "@/hooks/use-wishlist";
 import { formatCurrency, formatCurrencyCode, fillTemplate, formatPlace, formatClock } from "./format";
-import { PLACEHOLDER, toHotels, toIncludedActivity, toSummary, toTimelineItem, type SummaryDto } from "./mappers";
+import { PLACEHOLDER, toDestination, toHotels, toIncludedActivity, toSummary, toTimelineItem, type SummaryDto } from "./mappers";
 import { describeTravellers, tripTotals } from "./pricing";
 
 const prices = {
@@ -99,6 +99,15 @@ test("included experiences keep only the details entered; the photo's alt text f
 
 test("places read naturally", () => {
   const country = { code: "GE", name: "Georgia" };
-  assert.equal(formatPlace({ slug: "g", name: "Georgia", kind: "country", country, summary: "", hero: PLACEHOLDER, facts: [] }), "Georgia");
-  assert.equal(formatPlace({ slug: "d", name: "Dubai", kind: "place", country: { code: "AE", name: "United Arab Emirates" }, summary: "", hero: PLACEHOLDER, facts: [] }), "Dubai, United Arab Emirates");
+  assert.equal(formatPlace({ slug: "g", name: "Georgia", kind: "country", country, summary: "", about: [], hero: PLACEHOLDER, facts: [] }), "Georgia");
+  assert.equal(formatPlace({ slug: "d", name: "Dubai", kind: "place", country: { code: "AE", name: "United Arab Emirates" }, summary: "", about: [], hero: PLACEHOLDER, facts: [] }), "Dubai, United Arab Emirates");
+});
+
+test("a destination's description becomes the paragraphs of its About section; none when empty", () => {
+  const dto = { slug: "egypt", name: "Egypt", kind: "COUNTRY" as const, country: { code: "EG", name: "Egypt" }, shortDescription: "Pyramids.", heroImage: null, facts: [], seo: { title: null, description: null, canonicalUrl: null, ogTitle: null, ogDescription: null, ogImage: null, noindex: false } };
+  assert.deepEqual(toDestination({ ...dto, description: "Cairo and Giza.\n\n  Luxor and the Nile.  \n\n\n" }).about, ["Cairo and Giza.", "Luxor and the Nile."]);
+  assert.deepEqual(toDestination({ ...dto, description: "One paragraph,\nwith a line break." }).about, ["One paragraph,\nwith a line break."]);
+  assert.deepEqual(toDestination({ ...dto, description: "" }).about, []);
+  assert.deepEqual(toDestination(dto).about, [], "an API response without a description");
+  assert.equal(toDestination(dto).summary, "Pyramids.");
 });

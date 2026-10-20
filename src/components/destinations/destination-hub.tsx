@@ -12,7 +12,7 @@ import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { ExploreMore } from "@/components/packages/explore-more";
 import { PackageFeature } from "@/components/packages/package-feature";
 
-/** Landing page for a destination: its facts, every package going there, and bookable add-ons. */
+/** Landing page for a destination: its facts and introduction, every package going there, and bookable add-ons. */
 export async function DestinationHub({ slug }: { slug: string }) {
   const destination = await getDestination(slug);
   if (!destination) notFound();
@@ -63,6 +63,19 @@ export async function DestinationHub({ slug }: { slug: string }) {
             </div>
           ))}
         </dl>
+
+        {destination.about.length > 0 && (
+          <section aria-labelledby="about-destination" className="mt-16 lg:mt-20">
+            <h2 id="about-destination" data-reveal className="type-display text-3xl text-navy md:text-4xl">
+              About {destination.name}
+            </h2>
+            <div className="mt-6 max-w-[65ch] space-y-4 text-lg leading-relaxed text-ink">
+              {destination.about.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       <section aria-labelledby="destination-packages" className="shell mt-20 lg:mt-28">
