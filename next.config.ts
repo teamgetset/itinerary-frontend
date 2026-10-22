@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Only this account's image delivery URLs, without query strings: no other Cloudinary account, no PDFs.
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/bommfge0/image/upload/**", search: "" },
+      // Reviewers' profile photos, as the Google Business Profile API gives them with their reviews.
+      { protocol: "https", hostname: "lh3.googleusercontent.com", pathname: "/**" },
       {
         protocol: apiUrl.protocol.replace(":", "") as "http" | "https",
         hostname: apiUrl.hostname,

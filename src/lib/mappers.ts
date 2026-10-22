@@ -60,6 +60,8 @@ export interface SummaryDto {
   duration: { days: number; nights: number };
   arrival: { code: string; city: string } | null;
   heroImage: ImageDto | null;
+  /** Its branch's currency (missing from APIs older than prices per branch). */
+  currency?: string;
   startingPrice: Prices;
   keywords: string[];
 }
@@ -124,7 +126,8 @@ export interface DetailDto extends SummaryDto {
   terms: string[];
   destination: DestinationDto;
   branch: BranchDto;
-  reviews: { customerName: string; rating: number; review: string; source: { date: string | null } | null }[];
+  /** Only the reviews linked to this package: entered in the admin, then from Google. */
+  reviews: { customerName: string; rating: number; review: string; source: { name: string; date: string | null } | null }[];
   pdf: ItineraryPdf | null;
   /** Missing from an API older than the second version. */
   pdfWithoutLogo?: ItineraryPdf | null;
@@ -212,6 +215,7 @@ export function toSummary(dto: SummaryDto): PackageSummary {
     branchSlug: dto.branch.slug,
     tagline: dto.shortDescription,
     duration: dto.duration,
+    currency: dto.currency ?? Object.keys(dto.startingPrice)[0] ?? "",
     startingPrice: dto.startingPrice,
     cover: photo(dto.heroImage),
     route: {
@@ -294,11 +298,48 @@ export function toPackage(dto: DetailDto): TourPackage {
       rating: review.rating,
       quote: review.review,
       ...(review.source?.date && { date: review.source.date }),
+      ...(review.source?.name && { source: review.source.name }),
     })),
     pdf: dto.pdf,
     pdfWithoutLogo: dto.pdfWithoutLogo ?? null,
     seo: seo(dto.seo),
   };
+}
+
+export interface GoogleReviewsDto {
+  enabled: boolean;
+  locations: { title: string | null; mapsUri: string | null; averageRating: number | null; totalReviewCount: number }[];
+  /** Newest first. */
+  reviews: { id: string; author: string | null; photoUrl: string | null; rating: number; text: string; createTime: string; location: string | null }[];
+}
+
+/** How many Google reviews the carousel shows (the newest with words); the rating and total cover all of them. */
+export const GOOGLE_REVIEWS_SHOWN = 50;
+
+/**
+ * Reviews from GETSET's Google Business Profiles as review cards: the reviewer's name and photo as Google gives them
+ * ("A Google user" when anonymous), stars, words unchanged and the date, credited to Google with a link to the
+ * profile. Ratings without words have nothing to quote and are left out of the cards.
+ */
+export function toGoogleTestimonials(dto: GoogleReviewsDto): Testimonial[] {
+  const several = dto.locations.length > 1;
+  return dto.reviews
+    .filter((review) => review.text.trim())
+    .slice(0, GOOGLE_REVIEWS_SHOWN)
+    .map((review) => ({
+      id: `google-${review.id}`,
+      customerName: review.author ?? "A Google user",
+      profile: several && review.location ? review.location : "",
+      ...(review.photoUrl && { image: review.photoUrl }),
+      rating: review.rating,
+      review: review.text,
+      place: "",
+      source: {
+        name: "Google",
+        url: (dto.locations.find((location) => location.title === review.location) ?? dto.locations[0])?.mapsUri ?? null,
+        date: review.createTime.slice(0, 10),
+      },
+    }));
 }
 
 export function toTestimonial(dto: TestimonialDto): Testimonial {

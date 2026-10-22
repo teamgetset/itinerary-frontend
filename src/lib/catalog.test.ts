@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createElement, type ComponentProps } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { CurrencyProvider, Price } from "@/components/currency/currency";
 import { parseWishlist } from "@/hooks/use-wishlist";
 import { formatCurrency, formatCurrencyCode, fillTemplate, formatPlace, formatClock } from "./format";
-import { PLACEHOLDER, toDestination, toHotels, toIncludedActivity, toSummary, toTimelineItem, type SummaryDto } from "./mappers";
+import { GOOGLE_REVIEWS_SHOWN, PLACEHOLDER, toDestination, toGoogleTestimonials, toHotels, toIncludedActivity, toSummary, toTimelineItem, type SummaryDto } from "./mappers";
 import { describeTravellers, tripTotals } from "./pricing";
 
 const prices = {
@@ -47,6 +50,25 @@ test("API package summaries map to cards; a removed photo falls back to the plac
   assert.deepEqual(card.route, { from: [{ code: "CCJ", city: "Calicut" }], to: { code: "DPS", city: "Denpasar" } });
   assert.equal(card.category, "Holiday");
   assert.equal(card.destinationName, "Bali");
+  assert.equal(toSummary({ ...dto, currency: "INR", startingPrice: { INR: 36900 } }).currency, "INR", "the branch's currency, from the API");
+  assert.equal(card.currency, "INR", "an API older than prices per branch: the first currency it has a price in");
+});
+
+test("prices show in the package's currency only; experiences in every currency they have; nothing converted", () => {
+  const currencies = [
+    { code: "INR", symbol: "₹", name: "Indian rupee", locale: "en-IN" },
+    { code: "AED", symbol: "د.إ", name: "UAE dirham", locale: "en-AE" },
+  ];
+  const price = (props: Parameters<typeof Price>[0]) => renderToStaticMarkup(createElement(CurrencyProvider, { currencies } as ComponentProps<typeof CurrencyProvider>, createElement(Price, props)));
+  const both = { INR: 101500, AED: 2450 };
+  const dubai = price({ prices: both, currency: "AED", before: "From " });
+  assert.match(dubai, /From .*د\.إ.*2,450/);
+  assert.doesNotMatch(dubai, /₹|1,01,500/, "a Dubai package never shows rupees, even if old INR prices are still stored");
+  assert.match(price({ prices: both, currency: "INR" }), /₹.*1,01,500/, "Indian digit grouping for INR");
+  assert.equal(price({ prices: { INR: 3000 }, currency: "AED", before: "From " }), "<span>On request</span>", "no price in its currency: on request, never another currency");
+  const experience = price({ prices: { INR: 2000, AED: 90 }, before: "from " });
+  assert.match(experience, /₹.*2,000.* · .*د\.إ.*90/, "experiences, which no branch prices, show every currency");
+  assert.match(price({ prices: { AED: 90 } }), /د\.إ.*90/);
 });
 
 test("wishlist storage drops anything malformed", () => {
@@ -110,4 +132,32 @@ test("a destination's description becomes the paragraphs of its About section; n
   assert.deepEqual(toDestination({ ...dto, description: "" }).about, []);
   assert.deepEqual(toDestination(dto).about, [], "an API response without a description");
   assert.equal(toDestination(dto).summary, "Pyramids.");
+});
+
+test("Google reviews become review cards: as Google gives them, credited and linked to their profile", () => {
+  const dubai = { title: "GETSET Tours & Travels", mapsUri: "https://maps.google.com/?cid=1", averageRating: 4.8, totalReviewCount: 3 };
+  const review = (id: string, extra = {}) => ({ id, author: `Guest ${id}`, photoUrl: null, rating: 5, text: `Words ${id}`, createTime: "2026-03-24T10:00:00Z", location: dubai.title, ...extra });
+  const cards = toGoogleTestimonials({
+    enabled: true,
+    locations: [dubai],
+    reviews: [review("a", { photoUrl: "https://lh3.googleusercontent.com/a/x", rating: 3 }), review("anon", { author: null }), review("silent", { text: "  " })],
+  });
+  assert.deepEqual(cards[0], {
+    id: "google-a",
+    customerName: "Guest a",
+    profile: "",
+    image: "https://lh3.googleusercontent.com/a/x",
+    rating: 3,
+    review: "Words a",
+    place: "",
+    source: { name: "Google", url: dubai.mapsUri, date: "2026-03-24" },
+  });
+  assert.equal(cards[1].customerName, "A Google user", "anonymous reviewers stay anonymous");
+  assert.equal(cards.length, 2, "ratings without words have nothing to quote");
+  const many = toGoogleTestimonials({ enabled: true, locations: [dubai], reviews: Array.from({ length: 80 }, (_, i) => review(`r${i}`)) });
+  assert.equal(many.length, GOOGLE_REVIEWS_SHOWN);
+  assert.equal(many[0].id, "google-r0", "newest first, as the API sends them");
+  const calicut = { title: "GETSET Calicut", mapsUri: "https://maps.google.com/?cid=2", averageRating: 4.5, totalReviewCount: 1 };
+  const two = toGoogleTestimonials({ enabled: true, locations: [dubai, calicut], reviews: [review("c", { location: calicut.title })] });
+  assert.deepEqual([two[0].profile, two[0].source?.url], ["GETSET Calicut", calicut.mapsUri], "with several profiles, each card names and links its own");
 });

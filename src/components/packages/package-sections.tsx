@@ -101,6 +101,7 @@ export function ReviewsSection({ pkg }: { pkg: TourPackage }) {
             <p className="mt-4 text-sm text-muted">
               {review.author}
               {review.date && `, ${formatDate(review.date)}`}
+              {review.source && ` · ${review.source} review`}
             </p>
           </li>
         ))}

@@ -1,23 +1,19 @@
 "use client";
 
-import { createContext, use, useSyncExternalStore, type ReactNode } from "react";
+import { Fragment, createContext, use, type ReactNode } from "react";
 import type { Currency, Prices } from "@/types";
-import { CURRENCY_STORAGE_KEY } from "@/lib/currency";
 import { formatAmount } from "@/lib/format";
 
 /*
- * Currency switching without re-rendering pages: every price is rendered in every currency, and the
- * stylesheet in the root layout shows only the one named by <html data-currency>. The choice is kept
- * in localStorage and applied by a tiny head script before the page paints, so static pages stay static
- * and nothing flashes.
+ * Prices are shown in the currency they are set in, never converted and never switched by the visitor: a package's
+ * prices are in its branch's currency (Dubai AED, Calicut INR). The provider only carries the site's currencies
+ * (symbol, digit grouping) for formatting.
  */
 
-const CHANGE_EVENT = "getset:currency";
+const CurrencyContext = createContext<Currency[] | null>(null);
 
-const CurrencyContext = createContext<{ currencies: Currency[]; defaultCurrency: string } | null>(null);
-
-export function CurrencyProvider({ currencies, defaultCurrency, children }: { currencies: Currency[]; defaultCurrency: string; children: ReactNode }) {
-  return <CurrencyContext value={{ currencies, defaultCurrency }}>{children}</CurrencyContext>;
+export function CurrencyProvider({ currencies, children }: { currencies: Currency[]; children: ReactNode }) {
+  return <CurrencyContext value={currencies}>{children}</CurrencyContext>;
 }
 
 export function useCurrencies() {
@@ -26,102 +22,43 @@ export function useCurrencies() {
   return value;
 }
 
-/** The currency on show right now. Use it for actions (enquiries); for display, use <Price>. */
-export function activeCurrency(fallback: string) {
-  return (typeof document !== "undefined" && document.documentElement.dataset.currency) || fallback;
-}
-
-export function useActiveCurrency() {
-  const { defaultCurrency } = useCurrencies();
-  return useSyncExternalStore(
-    (onChange) => {
-      window.addEventListener(CHANGE_EVENT, onChange);
-      window.addEventListener("storage", onChange);
-      return () => {
-        window.removeEventListener(CHANGE_EVENT, onChange);
-        window.removeEventListener("storage", onChange);
-      };
-    },
-    () => activeCurrency(defaultCurrency),
-    () => defaultCurrency,
-  );
-}
-
-export function setActiveCurrency(code: string) {
-  document.documentElement.dataset.currency = code;
-  try {
-    localStorage.setItem(CURRENCY_STORAGE_KEY, code);
-  } catch {
-    // Private mode: the choice lasts for this page only.
-  }
-  window.dispatchEvent(new Event(CHANGE_EVENT));
-}
-
 /** Words around a price ("From ", " each"), styled like the text the price sits in. */
 const PRICE_WORDS = "text-sm font-normal text-muted";
 
 /**
- * An amount in every currency; CSS shows the selected one. A missing price reads "On request" (or `missing`), and the
- * words around it (`before`, `after`) appear only next to an actual amount, so a package without a price never reads
- * "From On request". The symbol is bidi-isolated so right-to-left symbols (د.إ) sit correctly before the number.
+ * A price, in `currency` (a package's: its branch's). Without `currency`, every currency it has an amount in, joined
+ * with " · ": for add-on experiences, which no branch prices. A missing price reads "On request" (or `missing`), and
+ * the words around it (`before`, `after`) appear only next to an actual amount, so a package without a price never
+ * reads "From On request". The symbol is bidi-isolated so right-to-left symbols (د.إ) sit correctly before the number.
  */
 export function Price({
   prices,
+  currency,
   className,
   before,
   after,
   missing = "On request",
 }: {
   prices: Prices;
+  currency?: string;
   className?: string;
   before?: string;
   after?: string;
   missing?: string;
 }) {
-  const { currencies } = useCurrencies();
+  const shown = useCurrencies().filter((c) => (!currency || c.code === currency) && prices[c.code] !== undefined);
+  if (!shown.length) return <span className={className}>{missing}</span>;
   return (
     <span className={className}>
-      {currencies.map((currency) => {
-        const amount = prices[currency.code];
-        return (
-          <span key={currency.code} data-price={currency.code}>
-            {amount === undefined ? (
-              missing
-            ) : (
-              <>
-                {before && <span className={PRICE_WORDS}>{before}</span>}
-                <bdi>{currency.symbol}</bdi>
-                {formatAmount(amount, currency)}
-                {after && <span className={PRICE_WORDS}>{after}</span>}
-              </>
-            )}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
-/** The INR / AED switch in the header. */
-export function CurrencyToggle({ className = "" }: { className?: string }) {
-  const { currencies } = useCurrencies();
-  const active = useActiveCurrency();
-  if (currencies.length < 2) return null;
-  return (
-    <div role="group" aria-label="Currency" className={`flex rounded-full bg-paper p-0.5 ring-1 ring-line ${className}`}>
-      {currencies.map((currency) => (
-        <button
-          key={currency.code}
-          type="button"
-          aria-pressed={active === currency.code}
-          data-currency-option={currency.code}
-          title={currency.name}
-          onClick={() => setActiveCurrency(currency.code)}
-          className="h-8 rounded-full px-2.5 text-xs font-bold tracking-wide text-muted transition-colors hover:text-navy sm:px-3"
-        >
-          {currency.code}
-        </button>
+      {before && <span className={PRICE_WORDS}>{before}</span>}
+      {shown.map((c, index) => (
+        <Fragment key={c.code}>
+          {index > 0 && <span className={PRICE_WORDS}> · </span>}
+          <bdi>{c.symbol}</bdi>
+          {formatAmount(prices[c.code]!, c)}
+        </Fragment>
       ))}
-    </div>
+      {after && <span className={PRICE_WORDS}>{after}</span>}
+    </span>
   );
 }

@@ -138,6 +138,8 @@ export interface Review {
   quote: string;
   /** ISO date. */
   date?: string;
+  /** Where it was left, e.g. "Google". */
+  source?: string;
 }
 
 export interface Branch {
@@ -173,9 +175,11 @@ export interface TourPackage {
   destination: Destination;
   tagline: string;
   duration: { days: number; nights: number };
-  /** Per traveller type (adult 12+, child 2-11, infant under 2), per currency. */
+  /** The one currency its prices are in and shown in: its branch's (Dubai AED, Calicut INR). */
+  currency: string;
+  /** Per traveller type (adult 12+, child 2-11, infant under 2), in `currency`. */
   prices: PriceTable;
-  /** Adult price per currency: the "From" price on cards. */
+  /** Adult price in `currency`: the "From" price on cards. */
   startingPrice: Prices;
   route: { from: Airport[]; to: Airport };
   bestTime: string | null;
@@ -208,7 +212,7 @@ export interface TourPackage {
 /** The light shape sent to client components (cards, search, wishlist). */
 export type PackageSummary = Pick<
   TourPackage,
-  "slug" | "title" | "category" | "branchSlug" | "tagline" | "duration" | "startingPrice" | "cover" | "route" | "keywords"
+  "slug" | "title" | "category" | "branchSlug" | "tagline" | "duration" | "currency" | "startingPrice" | "cover" | "route" | "keywords"
 > & { destinationName: string };
 
 export interface Paged<T> {

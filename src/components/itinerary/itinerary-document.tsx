@@ -138,7 +138,7 @@ export function ItineraryDocument({
   asOf,
 }: {
   pkg: TourPackage;
-  /** The site's currencies, in its order: one price column each. */
+  /** The package's currency (its branch's): its one price column. */
   currencies: Currency[];
   /** Null for the version without the logo: no GETSET logo or name, the same content and page breaks otherwise. */
   logo: PdfPicture | null;

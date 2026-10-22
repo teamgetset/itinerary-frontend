@@ -1,4 +1,3 @@
-import { Airplane } from "@phosphor-icons/react/dist/ssr";
 import type { TourPackage } from "@/types";
 import { formatDuration } from "@/lib/format";
 import { DownloadItineraryButton, type GeneratedPdfs } from "@/components/itinerary/download-itinerary-button";
@@ -18,7 +17,7 @@ function Perforation() {
 }
 
 /**
- * Package summary styled as a boarding pass: route, key facts, traveller pricing and the itinerary download.
+ * Package summary styled as a boarding pass: key facts, traveller pricing and the itinerary download.
  * Needs a <TravellersProvider> above it.
  */
 export function BoardingPass({
@@ -32,7 +31,6 @@ export function BoardingPass({
   /** The PDFs made from the package page, offered for a version that is not uploaded. */
   generatedPdf?: GeneratedPdfs;
 }) {
-  const { from, to } = pkg.route;
   const { branch } = pkg;
 
   return (
@@ -40,25 +38,6 @@ export function BoardingPass({
       aria-label="Trip summary"
       className="leaf-lg bg-paper ring-1 ring-line [--pad:1.5rem] sm:[--pad:2rem] lg:[--pad:1.5rem] 2xl:[--pad:2rem]"
     >
-      <div className="flex items-start justify-between gap-4 p-(--pad)">
-        <div>
-          <p className="type-label text-muted">From</p>
-          <p className="type-code mt-2 text-[1.75rem] text-navy">{from.map((airport) => airport.code).join(" / ") || branch.name}</p>
-          <p className="mt-1.5 text-sm text-muted">{from.map((airport) => airport.city).join(" or ") || "Departure city"}</p>
-        </div>
-        <div aria-hidden className="mt-9 flex flex-1 items-center gap-2 text-cobalt">
-          <span className="h-px flex-1 border-t-2 border-dashed border-cobalt/35" />
-          <Airplane weight="fill" className="size-5 rotate-90" />
-        </div>
-        <div className="text-right">
-          <p className="type-label text-muted">To</p>
-          <p className="type-code mt-2 text-[1.75rem] text-navy">{to.code}</p>
-          <p className="mt-1.5 text-sm text-muted">{to.city}</p>
-        </div>
-      </div>
-
-      <Perforation />
-
       <dl className="grid grid-cols-2 gap-x-6 gap-y-6 p-(--pad)">
         <div>
           <dt className="type-label text-muted">Duration</dt>

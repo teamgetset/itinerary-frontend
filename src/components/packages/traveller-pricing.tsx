@@ -6,7 +6,7 @@ import type { PriceTable } from "@/types";
 import { formatCurrency, formatCurrencyCode } from "@/lib/format";
 import { TRAVELLER_TYPES, describeTravellers, tripTotals, type TravellerGroup, type Travellers } from "@/lib/pricing";
 import { EnquiryButton } from "@/components/branches/enquiry-button";
-import { CurrencyToggle, Price, activeCurrency, useCurrencies } from "@/components/currency/currency";
+import { Price, useCurrencies } from "@/components/currency/currency";
 
 /** Most travellers of one age group the selector allows. Bigger groups enquire. */
 const MAX = 9;
@@ -16,6 +16,8 @@ const stepButton =
 
 interface Trip {
   prices: PriceTable;
+  /** The package's currency (its branch's): the one every total and message is in. */
+  currency: string;
   travellers: Travellers;
   setTravellers: (travellers: Travellers) => void;
 }
@@ -29,16 +31,16 @@ export function useTrip() {
 }
 
 /** Holds the traveller counts shared by the selector, the mobile total, WhatsApp and the enquiry form. */
-export function TravellersProvider({ prices, children }: { prices: PriceTable; children: ReactNode }) {
+export function TravellersProvider({ prices, currency, children }: { prices: PriceTable; currency: string; children: ReactNode }) {
   // Prices are per person on twin sharing, so start with a pair.
   const [travellers, setTravellers] = useState<Travellers>({ adults: 2, children: 0, infants: 0 });
-  return <TripContext value={{ prices, travellers, setTravellers }}>{children}</TripContext>;
+  return <TripContext value={{ prices, currency, travellers, setTravellers }}>{children}</TripContext>;
 }
 
-/** Steppers for adults, children and infants, with the total for the whole party in every currency. */
+/** Steppers for adults, children and infants, with the total for the whole party in the package's currency. */
 export function TravellerSelector() {
-  const { prices, travellers, setTravellers } = useTrip();
-  const { currencies, defaultCurrency } = useCurrencies();
+  const { prices, currency, travellers, setTravellers } = useTrip();
+  const format = useCurrencies().find((c) => c.code === currency);
   const id = useId();
   const [announcement, setAnnouncement] = useState("");
   const party = describeTravellers(travellers);
@@ -47,19 +49,14 @@ export function TravellerSelector() {
   const change = (type: TravellerGroup, by: number) => {
     const next = { ...travellers, [type]: travellers[type] + by };
     setTravellers(next);
-    // Announced in the currency on show, at the moment of the change.
-    const code = activeCurrency(defaultCurrency);
-    const currency = currencies.find((c) => c.code === code);
-    const total = tripTotals(prices, next)[code];
-    setAnnouncement(`${describeTravellers(next)}: ${total !== undefined && currency ? `estimated total ${formatCurrency(total, currency)}` : "price on request"}`);
+    // Announced at the moment of the change.
+    const total = tripTotals(prices, next)[currency];
+    setAnnouncement(`${describeTravellers(next)}: ${total !== undefined && format ? `estimated total ${formatCurrency(total, format)}` : "price on request"}`);
   };
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3">
-        <p className="type-label text-muted">Travellers</p>
-        <CurrencyToggle />
-      </div>
+      <p className="type-label text-muted">Travellers</p>
       <div className="mt-2 divide-y divide-line">
         {TRAVELLER_TYPES.map(({ type, priceType, label, one, ages, min }) => {
           const count = travellers[type];
@@ -73,7 +70,7 @@ export function TravellerSelector() {
                   {label} <span className="ml-0.5 text-sm font-normal text-muted">{ages}</span>
                 </p>
                 <p className="mt-0.5 text-sm text-muted">
-                  <Price prices={prices[priceType]} after=" each" />
+                  <Price prices={prices[priceType]} currency={currency} after=" each" />
                 </p>
               </div>
               <div className="flex items-center gap-1">
@@ -105,7 +102,7 @@ export function TravellerSelector() {
       <div className="mt-3 border-t border-line pt-5">
         <p className="type-label text-muted">Estimated total</p>
         <p className="type-display mt-1.5 text-[2.5rem] text-navy">
-          <Price prices={totals} />
+          <Price prices={totals} currency={currency} />
         </p>
         <p className="mt-1 text-sm text-muted">{party}, twin sharing, land only</p>
       </div>
@@ -118,37 +115,22 @@ export function TravellerSelector() {
 
 /** Compact total, for the mobile booking bar. */
 export function TripTotal() {
-  const { prices, travellers } = useTrip();
+  const { prices, currency, travellers } = useTrip();
   const count = travellers.adults + travellers.children + travellers.infants;
   return (
     <p className="text-xs whitespace-nowrap text-muted">
       Total for {count} {count === 1 ? "traveller" : "travellers"}
-      <Price prices={tripTotals(prices, travellers)} className="block text-lg font-semibold text-navy" />
+      <Price prices={tripTotals(prices, travellers)} currency={currency} className="block text-lg font-semibold text-navy" />
     </p>
   );
 }
 
-/**
- * WhatsApp enquiry carrying the chosen travellers and the estimate. One link per currency; the stylesheet
- * shows the one for the currency on display, so the message always matches the price the visitor sees.
- */
+/** WhatsApp enquiry carrying the chosen travellers and the estimate, in the package's currency as shown on the page. */
 export function TripEnquiryButton({ message, branch, ...props }: ComponentProps<typeof EnquiryButton>) {
-  const { prices, travellers } = useTrip();
-  const { currencies } = useCurrencies();
-  const party = describeTravellers(travellers);
+  const { prices, currency, travellers } = useTrip();
+  const format = useCurrencies().find((c) => c.code === currency);
   if (!branch.whatsapp) return <EnquiryButton branch={branch} message={message} {...props} />;
-  const totals = tripTotals(prices, travellers);
-  return (
-    <>
-      {currencies.map((currency) => {
-        const total = totals[currency.code];
-        const estimate = total === undefined ? "" : ` (estimated total ${formatCurrencyCode(total, currency)})`;
-        return (
-          <span key={currency.code} data-price={currency.code} className="contents">
-            <EnquiryButton branch={branch} message={`${message} Travellers: ${party}${estimate}.`} {...props} />
-          </span>
-        );
-      })}
-    </>
-  );
+  const total = tripTotals(prices, travellers)[currency];
+  const estimate = total === undefined || !format ? "" : ` (estimated total ${formatCurrencyCode(total, format)})`;
+  return <EnquiryButton branch={branch} message={`${message} Travellers: ${describeTravellers(travellers)}${estimate}.`} {...props} />;
 }

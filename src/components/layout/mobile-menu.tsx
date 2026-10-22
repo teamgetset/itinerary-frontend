@@ -7,7 +7,6 @@ import { Heart, List, Phone, User, X } from "@phosphor-icons/react/dist/ssr";
 import type { Branch, NavLink } from "@/types";
 import { siteConfig } from "@/config/site";
 import { iconButton } from "@/components/ui/button";
-import { CurrencyToggle } from "@/components/currency/currency";
 import { Logo } from "./logo";
 import { isActive } from "./nav-links";
 
@@ -61,12 +60,7 @@ export function MobileMenu({ links, branches }: { links: NavLink[]; branches: Pi
             </ul>
           </nav>
 
-          <div className="shell mt-8 flex items-center justify-between gap-4">
-            <p className="type-label text-muted">Show prices in</p>
-            <CurrencyToggle />
-          </div>
-
-          <div className="shell mt-6 grid grid-cols-2 gap-3">
+          <div className="shell mt-8 grid grid-cols-2 gap-3">
             <Link
               href="/wishlist"
               onClick={close}

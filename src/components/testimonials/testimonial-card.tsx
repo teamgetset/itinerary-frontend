@@ -52,8 +52,12 @@ export function TestimonialCard({ testimonial: t }: { testimonial: Testimonial }
 
       <p className="mt-6 flex items-center justify-between gap-3 text-sm text-muted">
         <span className="flex min-w-0 items-center gap-1.5">
-          <MapPin aria-hidden weight="fill" className="size-4 shrink-0 text-cobalt" />
-          <span className="truncate">{t.place}</span>
+          {t.place && (
+            <>
+              <MapPin aria-hidden weight="fill" className="size-4 shrink-0 text-cobalt" />
+              <span className="truncate">{t.place}</span>
+            </>
+          )}
         </span>
         {t.source && (
           <span className="shrink-0">

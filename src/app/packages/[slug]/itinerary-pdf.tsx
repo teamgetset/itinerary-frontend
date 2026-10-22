@@ -46,7 +46,7 @@ export async function itineraryPdf(slug: string, withLogo: boolean) {
   const pdf = await renderToBuffer(
     <ItineraryDocument
       pkg={pkg}
-      currencies={settings.currencies}
+      currencies={settings.currencies.filter((currency) => currency.code === pkg.currency)}
       logo={logo}
       hero={hero}
       dayPhotos={dayPhotos}

@@ -5,19 +5,17 @@ import { EnvelopeSimple, X } from "@phosphor-icons/react/dist/ssr";
 import { browserApi } from "@/lib/api";
 import { describeTravellers } from "@/lib/pricing";
 import { button, iconButton } from "@/components/ui/button";
-import { activeCurrency, useCurrencies } from "@/components/currency/currency";
 import { useTrip } from "./traveller-pricing";
 
 const field = "leaf-xs mt-1.5 block w-full bg-paper px-4 py-3 text-ink ring-1 ring-edge outline-none focus:ring-2 focus:ring-cobalt aria-invalid:ring-danger";
 
 /**
- * "Send an enquiry": name and a way to reply, sent to the branch with the travellers and the
- * estimate in the currency on show. For people who prefer not to use WhatsApp.
+ * "Send an enquiry": name and a way to reply, sent to the branch with the travellers (the API estimates the total
+ * in the package's currency). For people who prefer not to use WhatsApp.
  */
 export function EnquiryDialog({ packageSlug, packageTitle, branchName }: { packageSlug: string; packageTitle: string; branchName: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const { travellers } = useTrip();
-  const { defaultCurrency } = useCurrencies();
+  const { travellers, currency } = useTrip();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [sending, setSending] = useState(false);
@@ -39,7 +37,7 @@ export function EnquiryDialog({ packageSlug, packageTitle, branchName }: { packa
         message: text("message"),
         website: text("website") ?? undefined,
         packageSlug,
-        currency: activeCurrency(defaultCurrency),
+        currency,
         ...travellers,
       }),
     });

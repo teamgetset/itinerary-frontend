@@ -39,7 +39,7 @@ export function PackageView({
   return (
     <>
       {/* Traveller counts are shared by the boarding pass and the mobile booking bar. */}
-      <TravellersProvider prices={pkg.prices}>
+      <TravellersProvider prices={pkg.prices} currency={pkg.currency}>
         {preview && (
           <p role="status" className="bg-sun px-4 py-2.5 text-center text-sm font-semibold text-night">
             Preview{previewStatus === "PUBLISHED" ? "" : ` of a ${previewStatus.toLowerCase()} package`}: this link is private and expires in an hour.

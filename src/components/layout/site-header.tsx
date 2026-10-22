@@ -4,7 +4,6 @@ import { siteConfig } from "@/config/site";
 import { getBranches } from "@/services/branches";
 import { getSettings } from "@/services/settings";
 import { iconButton } from "@/components/ui/button";
-import { CurrencyToggle } from "@/components/currency/currency";
 import { SearchDialog } from "@/components/search/search-dialog";
 import { WishlistLink } from "@/components/wishlist/wishlist-link";
 import { Logo } from "./logo";
@@ -28,8 +27,6 @@ export async function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-0.5 justify-self-end">
-          {/* Phones switch currency in the menu (and on package pages): the header has no room. */}
-          <CurrencyToggle className="mr-2 hidden sm:flex" />
           <SearchDialog />
           <WishlistLink />
           <Link href="/account" aria-label="Account" className={`${iconButton} hidden sm:grid`}>

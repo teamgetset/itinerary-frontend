@@ -60,7 +60,7 @@ export function PackageCard({
         <p className="mt-auto flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pt-4 text-sm text-muted">
           <span>{formatDuration(pkg.duration)}</span>
           <span>
-            <Price prices={pkg.startingPrice} before="From " missing="Price on request" className="text-base font-semibold text-navy" />
+            <Price prices={pkg.startingPrice} currency={pkg.currency} before="From " missing="Price on request" className="text-base font-semibold text-navy" />
           </span>
         </p>
         {/* Visual cue only: the title link already covers the whole card. */}

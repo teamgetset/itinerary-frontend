@@ -48,7 +48,7 @@ export function tripJsonLd(pkg: TourPackage) {
         description: day.description,
       })),
     },
-    // One offer per currency: each is an official price, not a conversion.
+    // In the package's currency (its branch's): an official price, not a conversion.
     offers: Object.entries(pkg.startingPrice).map(([currency, price]) => ({
       "@type": "Offer",
       url,
